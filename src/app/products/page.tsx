@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, ShoppingBag, Sparkles, Users } from "lucide-react";
 import { getStorefrontBundle } from "@/lib/storefront-data";
 import { ProductCatalogShowcase } from "@/components/storefront/product-catalog-showcase";
+import { BrandLogo } from "@/components/ui/brand-logo";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,7 @@ export default async function CustomerProductsPage() {
             className="inline-flex h-9 items-center gap-2 rounded-xl border-2 border-[#0f172a] bg-white px-3 text-xs font-black text-[#0f172a] shadow-[2px_2px_0px_#0f172a] hover:bg-[#ecfeff]"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
+            <BrandLogo size="xs" className="h-5 w-5" />
             <span>{settings.brand_name}</span>
           </Link>
 

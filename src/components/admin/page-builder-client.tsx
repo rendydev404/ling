@@ -28,6 +28,7 @@ import { Input, Textarea } from "@/components/ui/input";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { Card, CustomSwitch, CustomTabs } from "@/components/ui/controls";
 import { CustomConfirmDialog, CustomModal } from "@/components/ui/custom-modal";
+import { BrandLogo } from "@/components/ui/brand-logo";
 import { useToast } from "@/components/ui/custom-toast";
 import { formatIDR } from "@/lib/utils";
 
@@ -610,15 +611,16 @@ export function PageBuilderClient({
             >
               <div className="h-[540px] overflow-y-auto px-4 py-6 space-y-3">
                 <div className="flex flex-col items-center text-center">
-                  <div
-                    className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-[#0f172a] text-lg font-black shadow-[3px_3px_0px_#0f172a]"
-                    style={{
-                      backgroundColor: theme.accentColor,
-                      color: theme.accentTextColor,
-                    }}
-                  >
-                    {settings.brand_name.slice(0, 2).toUpperCase()}
-                  </div>
+                  {settings.avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={settings.avatar_url}
+                      alt={settings.brand_name}
+                      className="h-16 w-16 rounded-2xl border-2 border-[#0f172a] object-cover shadow-[3px_3px_0px_#0f172a]"
+                    />
+                  ) : (
+                    <BrandLogo size="lg" />
+                  )}
                   <div className="mt-2.5 flex items-center gap-1.5">
                     <span className="text-sm font-black">{settings.brand_name}</span>
                     {settings.verified_badge && (

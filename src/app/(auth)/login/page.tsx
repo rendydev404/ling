@@ -3,11 +3,12 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Lock, Mail, ShoppingBag } from "lucide-react";
+import { ArrowLeft, Lock, Mail } from "lucide-react";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/controls";
+import { BrandLogo } from "@/components/ui/brand-logo";
 import { useToast } from "@/components/ui/custom-toast";
 
 function LoginForm() {
@@ -68,9 +69,7 @@ function LoginForm() {
 
         <Card className="p-6 sm:p-7">
           <div className="flex items-center gap-3.5 mb-6">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl border-2 border-[#0f172a] bg-[#22d3ee] text-[#0f172a] shadow-[3px_3px_0px_#0f172a]">
-              <ShoppingBag className="h-5 w-5" />
-            </div>
+            <BrandLogo size="md" />
             <div>
               <h1 className="text-lg font-extrabold text-[#0f172a]">Masuk Pelanggan</h1>
               <p className="text-xs font-medium text-[#475569]">

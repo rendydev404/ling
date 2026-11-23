@@ -3,12 +3,13 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Lock, Mail, Phone, Store, User } from "lucide-react";
+import { ArrowLeft, Lock, Mail, Phone, User } from "lucide-react";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { Card } from "@/components/ui/controls";
+import { BrandLogo } from "@/components/ui/brand-logo";
 import { useToast } from "@/components/ui/custom-toast";
 
 export default function RegisterPage() {
@@ -78,9 +79,7 @@ export default function RegisterPage() {
 
         <Card className="p-6 sm:p-7">
           <div className="flex items-center gap-3.5 mb-6">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl border-2 border-[#0f172a] bg-[#a855f7] text-white shadow-[3px_3px_0px_#0f172a]">
-              <Store className="h-5 w-5" />
-            </div>
+            <BrandLogo size="md" />
             <div>
               <h1 className="text-lg font-extrabold text-[#0f172a]">Buat Akun Baru</h1>
               <p className="text-xs font-medium text-[#475569]">

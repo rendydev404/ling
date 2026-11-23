@@ -13,13 +13,13 @@ import {
   Package,
   ShieldCheck,
   ShoppingCart,
-  Store,
   Tag,
   Users,
   Webhook,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BrandLogo } from "@/components/ui/brand-logo";
 
 const ALL_NAV_ITEMS = [
   { href: "/admin", label: "Ringkasan", shortLabel: "Home", icon: LayoutDashboard, exact: true },
@@ -68,9 +68,7 @@ export function AdminShell({
         <div className="flex h-full flex-col bg-white border-r-2 border-[#0f172a]">
           <div className="flex h-16 items-center justify-between px-5 border-b-2 border-[#0f172a] bg-[#ecfeff]">
             <Link href="/admin" className="flex items-center gap-2.5 min-w-0">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-[#0f172a] bg-[#22d3ee] text-[#0f172a] shadow-[2px_2px_0px_#0f172a]">
-                <Store className="h-5 w-5" />
-              </div>
+              <BrandLogo size="sm" />
               <div className="min-w-0">
                 <p className="text-sm font-black text-[#0f172a] truncate">{brandName}</p>
                 <p className="text-[10px] font-black uppercase tracking-wider text-[#7e22ce]">
@@ -153,9 +151,7 @@ export function AdminShell({
         {/* Mobile Compact Top Header */}
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b-2 border-[#0f172a] bg-white px-3.5 lg:hidden">
           <Link href="/admin" className="flex items-center gap-2 min-w-0">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border-2 border-[#0f172a] bg-[#22d3ee] text-[#0f172a] shadow-[2px_2px_0px_#0f172a]">
-              <Store className="h-4 w-4" />
-            </div>
+            <BrandLogo size="xs" />
             <div className="min-w-0">
               <p className="text-xs font-black text-[#0f172a] truncate leading-tight">
                 {activeItem.label}

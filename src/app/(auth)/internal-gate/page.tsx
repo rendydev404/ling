@@ -2,11 +2,12 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { KeyRound, Lock, Mail, ShieldCheck } from "lucide-react";
+import { Lock, Mail, ShieldCheck } from "lucide-react";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/controls";
+import { BrandLogo } from "@/components/ui/brand-logo";
 import { useToast } from "@/components/ui/custom-toast";
 
 const PRIMARY_ADMIN_EMAIL = "rendyakun50@gmail.com";
@@ -87,9 +88,7 @@ export default function InternalAdminGatePage() {
 
         <Card className="p-6 sm:p-7">
           <div className="flex items-center gap-3.5 mb-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl border-2 border-[#0f172a] bg-[#22d3ee] text-[#0f172a] shadow-[3px_3px_0px_#0f172a]">
-              <KeyRound className="h-5 w-5" />
-            </div>
+            <BrandLogo size="md" />
             <div>
               <h1 className="text-lg font-black text-[#0f172a]">Akses Konsol Pemilik</h1>
               <p className="text-xs font-semibold text-[#475569]">

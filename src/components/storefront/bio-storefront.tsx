@@ -13,7 +13,6 @@ import {
   Link2,
   Mail,
   MessageCircle,
-  Package,
   Play,
   Share2,
   ShieldCheck,
@@ -27,6 +26,7 @@ import type { BioBlock, Product, SocialLinkItem, StoreSettings } from "@/types/d
 import { cn, formatIDR, getYouTubeEmbedUrl } from "@/lib/utils";
 import { PRODUCT_TYPE_META, ProductTypeIcon } from "./product-type-meta";
 import { ProductCatalogShowcase } from "./product-catalog-showcase";
+import { BrandLogo } from "@/components/ui/brand-logo";
 import { useToast } from "@/components/ui/custom-toast";
 
 function SocialIcon({ platform }: { platform: SocialLinkItem["platform"] }) {
@@ -134,16 +134,7 @@ export function BioStorefront({
       >
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5 font-black text-sm tracking-tight">
-            <span
-              className="flex h-9 w-9 items-center justify-center rounded-xl border-2 text-xs font-black shadow-[2px_2px_0px_#0f172a]"
-              style={{
-                backgroundColor: theme.accentColor,
-                color: theme.accentTextColor,
-                borderColor: theme.borderColor,
-              }}
-            >
-              {settings.brand_name.slice(0, 1).toUpperCase()}
-            </span>
+            <BrandLogo size="sm" />
             <span className="truncate max-w-[140px] sm:max-w-none">@{settings.handle}</span>
           </Link>
 
@@ -224,7 +215,7 @@ export function BioStorefront({
           {/* Main Identity Content */}
           <div className="p-5 sm:p-7">
             <div className="flex flex-col sm:flex-row sm:items-start gap-5">
-              {/* Avatar Block */}
+              {/* Avatar / Official Brand Emblem */}
               <div className="shrink-0">
                 {settings.avatar_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -234,15 +225,7 @@ export function BioStorefront({
                     className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl border-2 border-[#0f172a] bg-white object-cover shadow-[4px_4px_0px_#0f172a]"
                   />
                 ) : (
-                  <div
-                    className="flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-2xl border-2 border-[#0f172a] text-2xl sm:text-3xl font-black shadow-[4px_4px_0px_#0f172a]"
-                    style={{
-                      backgroundColor: theme.accentColor,
-                      color: theme.accentTextColor,
-                    }}
-                  >
-                    {settings.brand_name.slice(0, 2).toUpperCase()}
-                  </div>
+                  <BrandLogo size="xl" />
                 )}
               </div>
 
@@ -666,7 +649,7 @@ export function BioStorefront({
       >
         <div className="mx-auto max-w-5xl px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-semibold">
           <div className="flex items-center gap-2">
-            <Package className="h-4 w-4" style={{ color: secondaryAccent }} />
+            <BrandLogo size="xs" className="h-5 w-5" />
             <span className="font-black" style={{ color: theme.textColor }}>
               {settings.brand_name}
             </span>

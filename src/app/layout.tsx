@@ -19,6 +19,13 @@ export const metadata: Metadata = {
   title: "Ling — Storefront & Creator Monetization",
   description:
     "Platform Link-in-Bio, Produk Digital, Kelas Online, Konsultasi 1-on-1, Event, Membership, dan Affiliate terintegrasi Midtrans.",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export default function RootLayout({
