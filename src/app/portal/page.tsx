@@ -18,7 +18,7 @@ export default async function BuyerPortalPage() {
           shipping_status: "not_applicable",
           shipping_courier: null,
           shipping_tracking_number: null,
-          created_at: new Date().toISOString(),
+          created_at: "2026-11-23T14:00:00.000Z",
         },
       ],
       digitalAssets: [
@@ -67,7 +67,7 @@ export default async function BuyerPortalPage() {
           id: "mem-demo-1",
           product_title: "Ling Inner Circle — Komunitas & Riset Bulanan",
           status: "active",
-          expires_at: new Date(Date.now() + 28 * 86400_000).toISOString(),
+          expires_at: "2026-12-23T14:00:00.000Z",
           community_link: "https://t.me/+example-inner-circle",
         },
       ],

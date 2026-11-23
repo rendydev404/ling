@@ -151,11 +151,11 @@ security definer
 set search_path = public
 as $$
 declare
-  user_count integer;
+  admin_count integer;
   assigned_role user_role;
 begin
-  select count(*) into user_count from public.profiles;
-  if user_count = 0 then
+  select count(*) into admin_count from public.profiles where role = 'admin';
+  if admin_count = 0 then
     assigned_role := 'admin';
   else
     assigned_role := coalesce((new.raw_user_meta_data ->> 'role')::user_role, 'buyer');
@@ -705,6 +705,26 @@ create policy "Admin manage webhooks" on public.outbound_webhooks for all using 
 create policy "Admin manage webhook_logs" on public.webhook_logs for all using (public.is_admin());
 
 -- ----------------------------------------------------------------------------
+-- 13. SUPABASE KEEP-ALIVE HEARTBEAT (PREVENTS FREE-TIER AUTO-PAUSE)
+-- ----------------------------------------------------------------------------
+create table if not exists public.keepalive_heartbeats (
+  key text primary key default 'primary',
+  source text not null default 'keepalive',
+  ping_count bigint not null default 1,
+  last_ping_at timestamptz not null default now()
+);
+
+alter table public.keepalive_heartbeats enable row level security;
+create policy "Admin read keepalive_heartbeats" on public.keepalive_heartbeats
+  for select using (public.is_admin());
+
+insert into public.keepalive_heartbeats (key, source, ping_count, last_ping_at)
+values ('primary', 'initial-migration', 1, now())
+on conflict (key) do update
+  set last_ping_at = excluded.last_ping_at,
+      ping_count = public.keepalive_heartbeats.ping_count + 1;
+
+-- ----------------------------------------------------------------------------
 -- STORAGE BUCKETS
 -- ----------------------------------------------------------------------------
 insert into storage.buckets (id, name, public)
@@ -714,3 +734,5 @@ on conflict (id) do nothing;
 insert into storage.buckets (id, name, public)
 values ('digital-assets', 'digital-assets', false)
 on conflict (id) do nothing;
+
+notify pgrst, 'reload schema';

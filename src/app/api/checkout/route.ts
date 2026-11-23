@@ -8,9 +8,42 @@ import {
 } from "@/lib/supabase/server";
 import { DEMO_PRODUCTS, DEMO_VARIANTS, DEFAULT_STORE_SETTINGS } from "@/lib/demo-data";
 import { calculateCheckoutPricing } from "@/lib/checkout-engine";
-import { createMidtransSnapTransaction } from "@/lib/midtrans";
+import { createMidtransSnapTransaction, isMidtransConfigured } from "@/lib/midtrans";
 import { generateOrderNumber, normalizePhoneID } from "@/lib/utils";
 import type { Product, ProductVariant, ShippingOption, Voucher } from "@/types/database";
+
+const DEMO_VOUCHERS: Record<string, Voucher> = {
+  LING20: {
+    id: "vch-demo-1",
+    code: "LING20",
+    discount_type: "percentage",
+    discount_value: 20,
+    max_discount_amount: 100000,
+    min_order_amount: 50000,
+    max_uses: 200,
+    used_count: 14,
+    applicable_product_id: null,
+    starts_at: null,
+    expires_at: null,
+    is_active: true,
+    created_at: "2026-01-01T00:00:00.000Z",
+  },
+  POTONG25K: {
+    id: "vch-demo-2",
+    code: "POTONG25K",
+    discount_type: "fixed",
+    discount_value: 25000,
+    max_discount_amount: null,
+    min_order_amount: 100000,
+    max_uses: 50,
+    used_count: 8,
+    applicable_product_id: null,
+    starts_at: null,
+    expires_at: null,
+    is_active: true,
+    created_at: "2026-01-01T00:00:00.000Z",
+  },
+};
 
 const checkoutSchema = z.object({
   productSlug: z.string().min(1),
@@ -52,9 +85,9 @@ export async function POST(request: Request) {
 
   const input = parsed.data;
   const orderNumber = generateOrderNumber();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/+$/, "");
 
-  // Demo mode simulation (no Supabase configured yet)
+  // Local Storefront mode (when Supabase is not configured yet)
   if (!isSupabaseServerConfigured()) {
     const product = DEMO_PRODUCTS.find((p) => p.slug === input.productSlug);
     if (!product) {
@@ -65,6 +98,9 @@ export async function POST(request: Request) {
       : null;
     const bumpProduct = product.order_bump_product_id
       ? DEMO_PRODUCTS.find((p) => p.id === product.order_bump_product_id) ?? null
+      : null;
+    const demoVoucher = input.voucherCode
+      ? DEMO_VOUCHERS[input.voucherCode.trim().toUpperCase()] ?? null
       : null;
 
     const courier = DEFAULT_STORE_SETTINGS.shipping_options.find(
@@ -78,14 +114,90 @@ export async function POST(request: Request) {
       customAmount: input.customAmount,
       includeOrderBump: input.includeOrderBump,
       orderBumpProduct: bumpProduct,
+      voucher: demoVoucher,
       shippingCost: courier?.cost ?? 0,
     });
 
+    const orderSummaryParams = new URLSearchParams({
+      amount: String(pricing.totalAmount),
+      product: product.title,
+      buyer: input.buyerName.trim(),
+    });
+
+    if (pricing.totalAmount > 0 && isMidtransConfigured()) {
+      const snapItems = [
+        {
+          id: product.id,
+          name: variant ? `${product.title} (${variant.name})` : product.title,
+          price: pricing.unitPrice,
+          quantity: input.quantity,
+        },
+      ];
+      if (input.includeOrderBump && bumpProduct && pricing.orderBumpAmount > 0) {
+        snapItems.push({
+          id: bumpProduct.id,
+          name: bumpProduct.title,
+          price: pricing.orderBumpAmount,
+          quantity: 1,
+        });
+      }
+      if (pricing.shippingCost > 0) {
+        snapItems.push({
+          id: "SHIPPING",
+          name: `Ongkos Kirim (${courier?.name ?? "Kurir"})`,
+          price: pricing.shippingCost,
+          quantity: 1,
+        });
+      }
+      if (pricing.discountAmount > 0) {
+        snapItems.push({
+          id: "DISCOUNT",
+          name: `Diskon Voucher (${demoVoucher?.code ?? "PROMO"})`,
+          price: -pricing.discountAmount,
+          quantity: 1,
+        });
+      }
+
+      const orderStatusUrl = `${appUrl}/orders/${orderNumber}?${orderSummaryParams.toString()}`;
+      try {
+        const snap = await createMidtransSnapTransaction({
+          orderId: orderNumber,
+          grossAmount: pricing.totalAmount,
+          customerName: input.buyerName.trim(),
+          customerEmail: input.buyerEmail.trim(),
+          customerPhone: normalizePhoneID(input.buyerPhone),
+          items: snapItems,
+          finishRedirectUrl: orderStatusUrl,
+        });
+
+        return NextResponse.json({
+          orderNumber,
+          totalAmount: pricing.totalAmount,
+          snapToken: snap.token,
+          redirectUrl: snap.redirect_url,
+          orderStatusUrl: `${orderStatusUrl}&snap=${encodeURIComponent(snap.redirect_url)}`,
+          isSimulated: snap.isSimulated,
+        });
+      } catch (err) {
+        return NextResponse.json(
+          {
+            error:
+              err instanceof Error
+                ? err.message
+                : "Gagal membuat transaksi Midtrans Snap.",
+          },
+          { status: 502 }
+        );
+      }
+    }
+
+    orderSummaryParams.set("demo", "1");
     return NextResponse.json({
       orderNumber,
       totalAmount: pricing.totalAmount,
       snapToken: `sandbox-demo-token-${orderNumber}`,
-      redirectUrl: `${appUrl}/orders/${orderNumber}?demo=1&amount=${pricing.totalAmount}&product=${encodeURIComponent(product.title)}&buyer=${encodeURIComponent(input.buyerName)}`,
+      redirectUrl: `${appUrl}/orders/${orderNumber}?${orderSummaryParams.toString()}`,
+      orderStatusUrl: `${appUrl}/orders/${orderNumber}?${orderSummaryParams.toString()}`,
       isSimulated: true,
     });
   }
@@ -326,31 +438,54 @@ export async function POST(request: Request) {
       });
     }
 
-    const snap = await createMidtransSnapTransaction({
-      orderId: orderNumber,
-      grossAmount: pricing.totalAmount,
-      customerName: input.buyerName.trim(),
-      customerEmail: input.buyerEmail.trim(),
-      customerPhone: normalizePhoneID(input.buyerPhone),
-      items: snapItems,
-      finishRedirectUrl: `${appUrl}/orders/${orderNumber}`,
-    });
+    const orderStatusUrl = `${appUrl}/orders/${orderNumber}`;
+    try {
+      const snap = await createMidtransSnapTransaction({
+        orderId: orderNumber,
+        grossAmount: pricing.totalAmount,
+        customerName: input.buyerName.trim(),
+        customerEmail: input.buyerEmail.trim(),
+        customerPhone: normalizePhoneID(input.buyerPhone),
+        items: snapItems,
+        finishRedirectUrl: orderStatusUrl,
+      });
 
-    await serviceClient
-      .from("orders")
-      .update({
-        midtrans_snap_token: snap.token,
-        midtrans_redirect_url: snap.redirect_url,
-      })
-      .eq("id", order.id);
+      await serviceClient
+        .from("orders")
+        .update({
+          midtrans_snap_token: snap.token,
+          midtrans_redirect_url: snap.redirect_url,
+        })
+        .eq("id", order.id);
 
-    return NextResponse.json({
-      orderNumber,
-      totalAmount: pricing.totalAmount,
-      snapToken: snap.token,
-      redirectUrl: snap.redirect_url,
-      isSimulated: snap.isSimulated,
-    });
+      return NextResponse.json({
+        orderNumber,
+        totalAmount: pricing.totalAmount,
+        snapToken: snap.token,
+        redirectUrl: snap.redirect_url,
+        orderStatusUrl,
+        isSimulated: snap.isSimulated,
+      });
+    } catch (err) {
+      await Promise.all([
+        serviceClient.from("orders").update({ payment_status: "cancelled" }).eq("id", order.id),
+        product.type === "appointment"
+          ? serviceClient
+              .from("appointment_bookings")
+              .update({ status: "cancelled" })
+              .eq("order_id", order.id)
+          : Promise.resolve(),
+      ]);
+      return NextResponse.json(
+        {
+          error:
+            err instanceof Error
+              ? err.message
+              : "Gagal membuat transaksi Midtrans Snap.",
+        },
+        { status: 502 }
+      );
+    }
   }
 
   return NextResponse.json({
@@ -358,6 +493,7 @@ export async function POST(request: Request) {
     totalAmount: 0,
     snapToken: null,
     redirectUrl: `${appUrl}/orders/${orderNumber}`,
+    orderStatusUrl: `${appUrl}/orders/${orderNumber}`,
     isSimulated: false,
   });
 }

@@ -38,7 +38,7 @@ export default async function AdminOverviewPage() {
       buyer_email: "andi@example.com",
       total_amount: 358000,
       payment_status: "paid",
-      created_at: new Date().toISOString(),
+      created_at: "2026-11-23T14:00:00.000Z",
     },
     {
       id: "demo-ord-2",
@@ -47,7 +47,7 @@ export default async function AdminOverviewPage() {
       buyer_email: "siti@example.com",
       total_amount: 99000,
       payment_status: "paid",
-      created_at: new Date(Date.now() - 3600_000).toISOString(),
+      created_at: "2026-11-23T13:00:00.000Z",
     },
     {
       id: "demo-ord-3",
@@ -56,7 +56,7 @@ export default async function AdminOverviewPage() {
       buyer_email: "dimas@example.com",
       total_amount: 350000,
       payment_status: "pending",
-      created_at: new Date(Date.now() - 7200_000).toISOString(),
+      created_at: "2026-11-23T12:00:00.000Z",
     },
   ];
 

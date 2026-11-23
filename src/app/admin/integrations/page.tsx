@@ -1,4 +1,5 @@
 import { getStorefrontBundle } from "@/lib/storefront-data";
+import { getMidtransConfigSummary } from "@/lib/midtrans";
 import { createServerSupabaseClient, isSupabaseServerConfigured } from "@/lib/supabase/server";
 import type { OutboundWebhook } from "@/types/database";
 import { IntegrationsClient } from "@/components/admin/integrations-client";
@@ -7,6 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminIntegrationsPage() {
   const { settings, isDemoMode } = await getStorefrontBundle();
+  const midtransConfig = getMidtransConfigSummary();
   let webhooks: OutboundWebhook[] = [];
 
   if (isSupabaseServerConfigured()) {
@@ -36,6 +38,7 @@ export default async function AdminIntegrationsPage() {
       initialSettings={settings}
       initialWebhooks={webhooks}
       isDemoMode={isDemoMode}
+      midtransConfig={midtransConfig}
     />
   );
 }

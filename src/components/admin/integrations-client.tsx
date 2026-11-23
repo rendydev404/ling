@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Plus, Radio, Save, Send, Trash2 } from "lucide-react";
+import { Copy, CreditCard, Plus, Radio, Save, Send, ShieldCheck, Trash2 } from "lucide-react";
+import type { MidtransConfigSummary } from "@/lib/midtrans";
 import type { OutboundWebhook, StoreSettings } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,10 +14,12 @@ export function IntegrationsClient({
   initialSettings,
   initialWebhooks,
   isDemoMode,
+  midtransConfig,
 }: {
   initialSettings: StoreSettings;
   initialWebhooks: OutboundWebhook[];
   isDemoMode: boolean;
+  midtransConfig: MidtransConfigSummary;
 }) {
   const { toast } = useToast();
   const [settings, setSettings] = React.useState(initialSettings);
@@ -131,16 +134,91 @@ export function IntegrationsClient({
     toast({ type: "success", title: "Webhook dihapus" });
   }
 
+  function copyWebhookUrl() {
+    navigator.clipboard.writeText(midtransConfig.webhookUrl);
+    toast({
+      type: "success",
+      title: "URL Webhook Midtrans disalin",
+      description: midtransConfig.webhookUrl,
+    });
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-extrabold text-[#0f172a]">
-          Marketing Pixels & Outbound Webhooks
+          Integrasi Pembayaran, Pixel & Webhooks
         </h1>
         <p className="mt-1 text-sm text-[#64748b]">
-          Hubungkan Meta Pixel, TikTok Pixel, GA4, serta kirim notifikasi otomatis ke WhatsApp Gateway (StarSender/Fonnte), KIRIM.EMAIL, Mailketing, atau n8n.
+          Pantau koneksi Midtrans Payment Gateway, hubungkan Meta/TikTok/GA4 Pixel, serta kelola Outbound Webhooks otomatis.
         </p>
       </div>
+
+      {/* Midtrans Payment Gateway Status Card */}
+      <Card className="p-6 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#ecfdf5] text-[#059669]">
+              <CreditCard className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-bold text-[#0f172a]">Midtrans Payment Gateway</h2>
+                <Badge variant={midtransConfig.isConfigured ? "success" : "warning"}>
+                  {!midtransConfig.isConfigured
+                    ? "BELUM DIKONFIGURASI"
+                    : midtransConfig.isProduction
+                      ? "PRODUCTION LIVE"
+                      : "SANDBOX"}
+                </Badge>
+              </div>
+              <p className="text-xs text-[#64748b]">
+                QRIS, Virtual Account, E-Wallet & Kartu Kredit via Midtrans Snap + verifikasi SHA-512 Signature Key.
+              </p>
+            </div>
+          </div>
+          {midtransConfig.merchantId && (
+            <span className="rounded-lg border border-[#e2e8f0] bg-[#f8fafc] px-3 py-1.5 font-mono text-xs font-bold text-[#0f172a]">
+              MID: {midtransConfig.merchantId}
+            </span>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-3">
+            <span className="text-[#64748b]">Client Key</span>
+            <p className="mt-1 font-mono font-semibold text-[#0f172a] truncate">
+              {midtransConfig.clientKeyMasked ?? "Belum diatur"}
+            </p>
+          </div>
+          <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-3">
+            <span className="text-[#64748b]">Server Key</span>
+            <p className="mt-1 font-mono font-semibold text-[#0f172a] truncate">
+              {midtransConfig.serverKeyMasked ?? "Belum diatur"}
+            </p>
+          </div>
+          <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-3">
+            <span className="text-[#64748b]">Signature Secret Key</span>
+            <p className="mt-1 font-mono font-semibold text-[#0f172a] truncate">
+              {midtransConfig.signatureKeyMasked ?? "Mengikuti Server Key"}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-[#d1fae5] bg-[#ecfdf5]/60 p-3.5 text-xs">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 font-bold text-[#047857]">
+              <ShieldCheck className="h-4 w-4 shrink-0" />
+              <span>Payment Notification URL (Midtrans Dashboard &rarr; Settings &rarr; Configuration)</span>
+            </div>
+            <p className="mt-1 font-mono text-[#0f172a] truncate">{midtransConfig.webhookUrl}</p>
+          </div>
+          <Button type="button" variant="outline" size="sm" onClick={copyWebhookUrl}>
+            <Copy className="h-3.5 w-3.5" />
+            Salin URL
+          </Button>
+        </div>
+      </Card>
 
       {/* Pixels & SEO Card */}
       <Card className="p-6 space-y-5">

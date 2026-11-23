@@ -1,4 +1,5 @@
 import { AdminShell } from "@/components/admin/admin-shell";
+import { isMidtransConfigured } from "@/lib/midtrans";
 import { requireAdmin } from "@/lib/supabase/auth";
 import { isSupabaseServerConfigured } from "@/lib/supabase/server";
 import { getStorefrontBundle } from "@/lib/storefront-data";
@@ -17,7 +18,11 @@ export default async function AdminLayout({
   const { settings, isDemoMode } = await getStorefrontBundle();
 
   return (
-    <AdminShell brandName={settings.brand_name} isDemoMode={isDemoMode}>
+    <AdminShell
+      brandName={settings.brand_name}
+      isDemoMode={isDemoMode}
+      isMidtransActive={isMidtransConfigured()}
+    >
       {children}
     </AdminShell>
   );

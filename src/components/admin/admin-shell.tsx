@@ -35,10 +35,12 @@ export function AdminShell({
   children,
   brandName,
   isDemoMode,
+  isMidtransActive = false,
 }: {
   children: React.ReactNode;
   brandName: string;
   isDemoMode: boolean;
+  isMidtransActive?: boolean;
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = React.useState(false);
@@ -156,7 +158,15 @@ export function AdminShell({
 
         {isDemoMode && (
           <div className="border-b border-[#fde68a] bg-[#fffbeb] px-6 py-2.5 text-xs font-medium text-[#92400e]">
-            Mode Pratinjau Lokal — Untuk menyimpan perubahan secara permanen dan memproses pembayaran nyata, isi konfigurasi Supabase & Midtrans di <code>.env.local</code>.
+            {isMidtransActive ? (
+              <>
+                Midtrans telah terhubung — Untuk menyimpan produk & pesanan secara permanen, lengkapi konfigurasi Supabase di <code>.env.local</code>.
+              </>
+            ) : (
+              <>
+                Mode Pratinjau Lokal — Untuk menyimpan perubahan secara permanen dan memproses pembayaran nyata, isi konfigurasi Supabase & Midtrans di <code>.env.local</code>.
+              </>
+            )}
           </div>
         )}
 

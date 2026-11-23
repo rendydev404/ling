@@ -73,11 +73,13 @@ export function BioStorefront({
   blocks,
   products,
   isDemoMode,
+  isMidtransActive = false,
 }: {
   settings: StoreSettings;
   blocks: BioBlock[];
   products: Product[];
   isDemoMode: boolean;
+  isMidtransActive?: boolean;
 }) {
   const { toast } = useToast();
   const [selectedType, setSelectedType] = React.useState<"all" | ProductType>("all");
@@ -203,7 +205,15 @@ export function BioStorefront({
             <span className="inline-flex items-center gap-2">
               <Sparkles className="h-3.5 w-3.5 shrink-0" style={{ color: theme.accentColor }} />
               <span>
-                Mode Pratinjau Aktif — sambungkan Supabase & Midtrans di <code>.env.local</code> untuk transaksi live.
+                {isMidtransActive ? (
+                  <>
+                    Midtrans Aktif — sambungkan Supabase di <code>.env.local</code> untuk menyimpan produk & pesanan ke database.
+                  </>
+                ) : (
+                  <>
+                    Mode Pratinjau Aktif — sambungkan Supabase & Midtrans di <code>.env.local</code> untuk transaksi live.
+                  </>
+                )}
               </span>
             </span>
           </div>

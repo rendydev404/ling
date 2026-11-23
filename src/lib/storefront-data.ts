@@ -61,6 +61,16 @@ export async function getStorefrontBundle(): Promise<{
       .limit(100),
   ]);
 
+  // Graceful fallback if SQL schema has not been applied to Supabase yet
+  if (productsRes.error?.code === "PGRST205" || settingsRes.error?.code === "PGRST205") {
+    return {
+      settings: DEFAULT_STORE_SETTINGS,
+      blocks: DEMO_BIO_BLOCKS,
+      products: DEMO_PRODUCTS,
+      isDemoMode: true,
+    };
+  }
+
   return {
     settings: (settingsRes.data as StoreSettings | null) ?? DEFAULT_STORE_SETTINGS,
     blocks: (blocksRes.data as BioBlock[] | null) ?? [],
@@ -150,6 +160,33 @@ export async function getProductBySlug(slug: string): Promise<{
       .eq("status", "published")
       .single(),
   ]);
+
+  if (productRes.error?.code === "PGRST205" || settingsRes.error?.code === "PGRST205") {
+    const fallbackProduct = DEMO_PRODUCTS.find((p) => p.slug === slug) ?? null;
+    const fallbackBump = fallbackProduct?.order_bump_product_id
+      ? DEMO_PRODUCTS.find((p) => p.id === fallbackProduct.order_bump_product_id) ?? null
+      : null;
+    return {
+      product: fallbackProduct,
+      variants: fallbackProduct ? DEMO_VARIANTS[fallbackProduct.id] ?? [] : [],
+      courseSections: fallbackProduct ? DEMO_COURSE_SECTIONS[fallbackProduct.id] ?? [] : [],
+      availability:
+        fallbackProduct?.type === "appointment"
+          ? [1, 2, 3, 4, 5].map((day) => ({
+              id: `avail-${day}`,
+              product_id: fallbackProduct.id,
+              day_of_week: day,
+              start_time: "09:00",
+              end_time: "17:00",
+              is_active: true,
+            }))
+          : [],
+      orderBumpProduct: fallbackBump,
+      recentDonations: [],
+      settings: DEFAULT_STORE_SETTINGS,
+      isDemoMode: true,
+    };
+  }
 
   const settings = (settingsRes.data as StoreSettings | null) ?? DEFAULT_STORE_SETTINGS;
   const product = (productRes.data as Product | null) ?? null;

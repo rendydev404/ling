@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getStorefrontBundle } from "@/lib/storefront-data";
+import { isMidtransConfigured } from "@/lib/midtrans";
 import { BioStorefront } from "@/components/storefront/bio-storefront";
 import { PixelScripts } from "@/components/marketing/pixel-scripts";
 
@@ -24,6 +25,7 @@ export default async function HomePage() {
         blocks={blocks}
         products={products}
         isDemoMode={isDemoMode}
+        isMidtransActive={isMidtransConfigured()}
       />
     </>
   );

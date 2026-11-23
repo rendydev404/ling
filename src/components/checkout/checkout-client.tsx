@@ -112,17 +112,20 @@ export function CheckoutClient({
 
   const [submitting, setSubmitting] = React.useState(false);
 
-  // Fetch appointment slots whenever date changes
-  React.useEffect(() => {
-    if (product.type !== "appointment" || !bookingDate) return;
-    setLoadingSlots(true);
+  function handleBookingDateChange(nextDate: string) {
+    setBookingDate(nextDate);
     setSelectedSlot(null);
-    fetch(`/api/appointments/${product.id}/slots?date=${encodeURIComponent(bookingDate)}`)
+    if (product.type !== "appointment" || !nextDate) {
+      setSlots([]);
+      return;
+    }
+    setLoadingSlots(true);
+    fetch(`/api/appointments/${product.id}/slots?date=${encodeURIComponent(nextDate)}`)
       .then((res) => res.json())
       .then((data) => setSlots(data.slots ?? []))
       .catch(() => setSlots([]))
       .finally(() => setLoadingSlots(false));
-  }, [bookingDate, product.id, product.type]);
+  }
 
   const selectedVariant = variants.find((v) => v.id === variantId) ?? null;
   const selectedCourier = settings.shipping_options.find((c) => c.code === courierCode) ?? null;
@@ -223,20 +226,44 @@ export function CheckoutClient({
         return;
       }
 
+      const statusDestination: string = json.orderStatusUrl || `/orders/${json.orderNumber}`;
+      const toInternalPath = (url: string) => {
+        try {
+          const u = new URL(url, window.location.origin);
+          if (u.origin === window.location.origin) {
+            return `${u.pathname}${u.search}`;
+          }
+        } catch {
+          // ignore
+        }
+        return url;
+      };
+
       // If real Midtrans Snap popup is loaded & not simulated, trigger Snap popup
       if (!json.isSimulated && json.snapToken && window.snap) {
+        const dest = toInternalPath(statusDestination);
         window.snap.pay(json.snapToken, {
-          onSuccess: () => router.push(`/orders/${json.orderNumber}`),
-          onPending: () => router.push(`/orders/${json.orderNumber}`),
+          onSuccess: () => router.push(dest),
+          onPending: () => router.push(dest),
           onError: () =>
             toast({ type: "error", title: "Pembayaran gagal diproses oleh Midtrans" }),
-          onClose: () => router.push(`/orders/${json.orderNumber}`),
+          onClose: () => router.push(dest),
         });
         return;
       }
 
-      // Otherwise navigate to order confirmation / payment redirect URL
-      router.push(json.redirectUrl || `/orders/${json.orderNumber}`);
+      // Otherwise navigate to Midtrans hosted payment page or internal order confirmation URL
+      const fallbackUrl: string = json.redirectUrl || statusDestination;
+      if (fallbackUrl.startsWith("http://") || fallbackUrl.startsWith("https://")) {
+        const internal = toInternalPath(fallbackUrl);
+        if (internal !== fallbackUrl) {
+          router.push(internal);
+        } else {
+          window.location.assign(fallbackUrl);
+        }
+      } else {
+        router.push(fallbackUrl);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -363,7 +390,7 @@ export function CheckoutClient({
                   value={bookingDate}
                   minDate={todayIso}
                   allowedWeekdays={availability.map((a) => a.day_of_week)}
-                  onChange={setBookingDate}
+                  onChange={handleBookingDateChange}
                 />
                 {bookingDate && (
                   <div className="space-y-2 pt-2">
