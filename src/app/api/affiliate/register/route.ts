@@ -32,9 +32,17 @@ export async function POST(request: Request) {
 
   const { data: settings } = await service
     .from("store_settings")
-    .select("affiliate_auto_approve")
+    .select("affiliate_auto_approve, seo_config")
     .eq("singleton_key", "primary")
     .single();
+
+  const seoConfig = (settings?.seo_config ?? null) as { affiliateProgramEnabled?: boolean } | null;
+  if (seoConfig?.affiliateProgramEnabled === false) {
+    return NextResponse.json(
+      { error: "Program affiliate sedang dinonaktifkan oleh pemilik toko." },
+      { status: 403 }
+    );
+  }
 
   const code = parsed.data.referralCode || generateReferralCode(user.email ?? "PARTNER");
 

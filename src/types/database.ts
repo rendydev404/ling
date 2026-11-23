@@ -78,6 +78,7 @@ export interface SeoConfig {
   metaTitle: string;
   metaDescription: string;
   ogImageUrl: string;
+  affiliateProgramEnabled?: boolean;
 }
 
 export interface PixelsConfig {
@@ -108,6 +109,7 @@ export interface StoreSettings {
   shipping_options: ShippingOption[];
   default_affiliate_commission_pct: number;
   affiliate_auto_approve: boolean;
+  affiliate_program_enabled?: boolean;
   updated_at: string;
 }
 

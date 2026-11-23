@@ -106,3 +106,19 @@ export function getYouTubeEmbedUrl(url: string): string | null {
     return null;
   }
 }
+
+export function isAffiliateProgramEnabled(
+  settings?: {
+    affiliate_program_enabled?: boolean;
+    seo_config?: { affiliateProgramEnabled?: boolean } | null;
+  } | null
+): boolean {
+  if (!settings) return true;
+  if (typeof settings.affiliate_program_enabled === "boolean") {
+    return settings.affiliate_program_enabled;
+  }
+  if (typeof settings.seo_config?.affiliateProgramEnabled === "boolean") {
+    return settings.seo_config.affiliateProgramEnabled;
+  }
+  return true;
+}

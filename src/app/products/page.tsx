@@ -4,6 +4,7 @@ import { ArrowLeft, ShoppingBag, Sparkles, Users } from "lucide-react";
 import { getStorefrontBundle } from "@/lib/storefront-data";
 import { ProductCatalogShowcase } from "@/components/storefront/product-catalog-showcase";
 import { BrandLogo } from "@/components/ui/brand-logo";
+import { isAffiliateProgramEnabled } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,7 @@ export default async function CustomerProductsPage() {
   const { settings, products } = await getStorefrontBundle();
   const theme = settings.theme_config;
   const secondaryAccent = theme.secondaryAccentColor || "#a855f7";
+  const affiliateEnabled = isAffiliateProgramEnabled(settings);
 
   return (
     <div
@@ -47,14 +49,16 @@ export default async function CustomerProductsPage() {
               <ShoppingBag className="h-3.5 w-3.5" />
               <span>Pesanan</span>
             </Link>
-            <Link
-              href="/affiliate"
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl border-2 border-[#0f172a] px-3 text-xs font-black text-white shadow-[2px_2px_0px_#0f172a]"
-              style={{ backgroundColor: secondaryAccent }}
-            >
-              <Users className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Affiliate</span>
-            </Link>
+            {affiliateEnabled && (
+              <Link
+                href="/affiliate"
+                className="inline-flex h-9 items-center gap-1.5 rounded-xl border-2 border-[#0f172a] px-3 text-xs font-black text-white shadow-[2px_2px_0px_#0f172a]"
+                style={{ backgroundColor: secondaryAccent }}
+              >
+                <Users className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Affiliate</span>
+              </Link>
+            )}
           </nav>
         </div>
       </header>

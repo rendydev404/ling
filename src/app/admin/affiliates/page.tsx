@@ -1,10 +1,15 @@
 import { createServerSupabaseClient, isSupabaseServerConfigured } from "@/lib/supabase/server";
+import { getStorefrontBundle } from "@/lib/storefront-data";
 import { Badge, Card } from "@/components/ui/controls";
-import { formatDateID, formatIDR } from "@/lib/utils";
+import { AffiliateProgramControl } from "@/components/admin/affiliate-program-control";
+import { formatDateID, formatIDR, isAffiliateProgramEnabled } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminAffiliatesPage() {
+  const { settings } = await getStorefrontBundle();
+  const affiliateEnabled = isAffiliateProgramEnabled(settings);
+
   let affiliates: Array<{
     id: string;
     referral_code: string;
@@ -37,9 +42,12 @@ export default async function AdminAffiliatesPage() {
       <div>
         <h1 className="text-xl sm:text-2xl font-black text-[#0f172a]">Program Affiliate</h1>
         <p className="mt-1 text-xs sm:text-sm font-medium text-[#475569]">
-          Kelola partner affiliate, pantau konversi penjualan referral, dan rekap pencairan komisi.
+          Aktifkan atau nonaktifkan program affiliate publik, pantau konversi referral, dan rekap komisi.
         </p>
       </div>
+
+      {/* On/Off Toggle Card */}
+      <AffiliateProgramControl initialEnabled={affiliateEnabled} />
 
       <Card className="overflow-hidden">
         {affiliates.length === 0 ? (

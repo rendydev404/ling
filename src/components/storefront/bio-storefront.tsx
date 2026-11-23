@@ -23,7 +23,7 @@ import {
   Zap,
 } from "lucide-react";
 import type { BioBlock, Product, SocialLinkItem, StoreSettings } from "@/types/database";
-import { cn, formatIDR, getYouTubeEmbedUrl } from "@/lib/utils";
+import { cn, formatIDR, getYouTubeEmbedUrl, isAffiliateProgramEnabled } from "@/lib/utils";
 import { PRODUCT_TYPE_META, ProductTypeIcon } from "./product-type-meta";
 import { ProductCatalogShowcase } from "./product-catalog-showcase";
 import { BrandLogo } from "@/components/ui/brand-logo";
@@ -80,6 +80,7 @@ export function BioStorefront({
   const theme = settings.theme_config;
   const secondaryAccent = theme.secondaryAccentColor || "#a855f7";
   const radiusClass = getRadiusClass(theme.buttonRadius);
+  const affiliateEnabled = isAffiliateProgramEnabled(settings);
 
   const productMap = React.useMemo(() => {
     const map = new Map<string, Product>();
@@ -163,18 +164,20 @@ export function BioStorefront({
               <ShoppingBag className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Pesanan Saya</span>
             </Link>
-            <Link
-              href="/affiliate"
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl border-2 px-3 text-xs font-black shadow-[2px_2px_0px_#0f172a] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5"
-              style={{
-                backgroundColor: secondaryAccent,
-                borderColor: theme.borderColor,
-                color: "#ffffff",
-              }}
-            >
-              <Users className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Affiliate</span>
-            </Link>
+            {affiliateEnabled && (
+              <Link
+                href="/affiliate"
+                className="inline-flex h-9 items-center gap-1.5 rounded-xl border-2 px-3 text-xs font-black shadow-[2px_2px_0px_#0f172a] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5"
+                style={{
+                  backgroundColor: secondaryAccent,
+                  borderColor: theme.borderColor,
+                  color: "#ffffff",
+                }}
+              >
+                <Users className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Affiliate</span>
+              </Link>
+            )}
           </nav>
         </div>
       </header>
