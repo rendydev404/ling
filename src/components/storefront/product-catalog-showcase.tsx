@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   ArrowUpDown,
   ArrowUpRight,
+  ChevronDown,
   Flame,
   LayoutGrid,
   List,
@@ -138,18 +139,33 @@ export function ProductCatalogShowcase({
     });
   }, [products, selectedType, searchQuery, sortMode]);
 
+  // Clean Empty Catalog State (no cluttered 0-count filter chips when catalog has no products yet)
+  if (products.length === 0) {
+    return (
+      <div className="rounded-2xl sm:rounded-3xl border-2 border-[#0f172a] bg-white p-10 sm:p-14 text-center shadow-[5px_5px_0px_#0f172a]">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-[#0f172a] bg-[#ecfeff] text-[#0f172a] shadow-[3px_3px_0px_#0f172a]">
+          <PackageOpen className="h-7 w-7" />
+        </div>
+        <h2 className="text-base sm:text-lg font-black text-[#0f172a]">
+          Katalog Produk Segera Hadir
+        </h2>
+        <p className="mx-auto mt-1.5 max-w-md text-xs sm:text-sm font-medium text-[#475569] leading-relaxed">
+          Belum ada produk atau layanan yang dipublikasikan saat ini. Silakan kunjungi kembali halaman ini untuk melihat rilisan terbaru.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
       {/* SPOTLIGHT FEATURED BANNER */}
       {spotlightProduct && (
-        <div
-          className="relative overflow-hidden rounded-2xl border-2 border-[#0f172a] bg-white shadow-[6px_6px_0px_#0f172a]"
-        >
+        <div className="overflow-hidden rounded-2xl border-2 border-[#0f172a] bg-white shadow-[6px_6px_0px_#0f172a]">
           <div className="grid grid-cols-1 md:grid-cols-12">
             {/* Visual Left Poster */}
             <div
               className={cn(
-                "relative flex min-h-44 md:col-span-5 items-center justify-center border-b-2 md:border-b-0 md:border-r-2 border-[#0f172a] p-6 overflow-hidden",
+                "relative flex h-44 md:h-auto md:col-span-5 items-center justify-center border-b-2 md:border-b-0 md:border-r-2 border-[#0f172a] p-6 overflow-hidden",
                 getPosterBg(spotlightProduct.type)
               )}
             >
@@ -216,7 +232,7 @@ export function ProductCatalogShowcase({
               <div className="flex flex-wrap items-center justify-between gap-3 border-t-2 border-[#0f172a] pt-3.5">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-wider text-[#64748b]">
-                     Penawaran Spesial
+                    Penawaran Spesial
                   </p>
                   <div className="flex items-baseline gap-2">
                     <span className="text-lg sm:text-xl font-black text-[#0f172a]">
@@ -256,7 +272,7 @@ export function ProductCatalogShowcase({
       )}
 
       {/* DISCOVERY & FILTER CONTROL PANEL */}
-      <div className="rounded-2xl border-2 border-[#0f172a] bg-white p-3.5 sm:p-4 shadow-[4px_4px_0px_#0f172a] space-y-3">
+      <div className="rounded-2xl border-2 border-[#0f172a] bg-white p-4 shadow-[4px_4px_0px_#0f172a] space-y-3">
         <div className="flex flex-col sm:flex-row gap-2.5">
           <div className="flex-1">
             <CustomSearchInput
@@ -267,14 +283,14 @@ export function ProductCatalogShowcase({
           </div>
 
           <div className="flex items-center justify-between sm:justify-end gap-2">
-            {/* Sort Pills */}
-            <div className="inline-flex items-center gap-1 rounded-xl border-2 border-[#0f172a] bg-[#f4f8fb] px-2.5 h-10">
-              <ArrowUpDown className="h-3.5 w-3.5 text-[#0f172a] shrink-0" />
+            {/* Custom Styled Sort Select */}
+            <div className="relative inline-flex items-center rounded-xl border-2 border-[#0f172a] bg-[#f4f8fb] h-10 pl-3 pr-8">
+              <ArrowUpDown className="h-3.5 w-3.5 text-[#0f172a] mr-1.5 shrink-0" />
               <select
                 aria-label="Urutkan produk"
                 value={sortMode}
                 onChange={(e) => setSortMode(e.target.value as SortMode)}
-                className="bg-transparent text-xs font-black text-[#0f172a] focus:outline-none cursor-pointer pr-1"
+                className="appearance-none bg-transparent text-xs font-black text-[#0f172a] focus:outline-none cursor-pointer"
               >
                 {SORT_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -282,45 +298,46 @@ export function ProductCatalogShowcase({
                   </option>
                 ))}
               </select>
+              <ChevronDown className="pointer-events-none absolute right-2.5 h-3.5 w-3.5 text-[#0f172a]" />
             </div>
 
             {/* Grid vs List Toggle */}
-            <div className="inline-flex rounded-xl border-2 border-[#0f172a] bg-[#f4f8fb] p-0.5 h-10 items-center">
+            <div className="inline-flex rounded-xl border-2 border-[#0f172a] bg-[#f4f8fb] p-1 h-10 items-center gap-0.5">
               <button
                 type="button"
                 onClick={() => setViewMode("grid")}
                 aria-label="Tampilan Grid"
                 className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-lg transition-all cursor-pointer",
+                  "flex h-7 w-7 items-center justify-center rounded-lg transition-all cursor-pointer",
                   viewMode === "grid"
                     ? "bg-[#22d3ee] text-[#0f172a] border border-[#0f172a]"
                     : "text-[#64748b] hover:text-[#0f172a]"
                 )}
               >
-                <LayoutGrid className="h-4 w-4" />
+                <LayoutGrid className="h-3.5 w-3.5" />
               </button>
               <button
                 type="button"
                 onClick={() => setViewMode("list")}
                 aria-label="Tampilan List"
                 className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-lg transition-all cursor-pointer",
+                  "flex h-7 w-7 items-center justify-center rounded-lg transition-all cursor-pointer",
                   viewMode === "list"
                     ? "bg-[#22d3ee] text-[#0f172a] border border-[#0f172a]"
                     : "text-[#64748b] hover:text-[#0f172a]"
                 )}
               >
-                <List className="h-4 w-4" />
+                <List className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
         </div>
 
-        {/* Horizontal Category Chips */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+        {/* Horizontal Category Chips (only non-empty categories + Semua) */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
           {FILTER_TYPES.map((f) => {
             const count = countsByType[f.value] ?? 0;
-            if (f.value !== "all" && count === 0 && products.length > 0) return null;
+            if (f.value !== "all" && count === 0) return null;
             const active = selectedType === f.value;
             return (
               <button
@@ -328,9 +345,9 @@ export function ProductCatalogShowcase({
                 type="button"
                 onClick={() => setSelectedType(f.value)}
                 className={cn(
-                  "inline-flex shrink-0 items-center gap-1.5 rounded-xl border-2 border-[#0f172a] px-3 py-1.5 text-xs font-black transition-all cursor-pointer",
+                  "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl border-2 border-[#0f172a] px-3 text-xs font-black transition-all cursor-pointer",
                   active
-                    ? "bg-[#22d3ee] text-[#0f172a] shadow-[2px_2px_0px_#0f172a] -translate-y-0.5"
+                    ? "bg-[#22d3ee] text-[#0f172a] shadow-[2px_2px_0px_#0f172a]"
                     : "bg-white text-[#334155] hover:bg-[#f3e8ff] hover:text-[#0f172a]"
                 )}
               >
@@ -340,7 +357,7 @@ export function ProductCatalogShowcase({
                 <span>{f.label}</span>
                 <span
                   className={cn(
-                    "rounded-md border border-[#0f172a] px-1.5 py-0.2 text-[10px] font-black",
+                    "rounded-md border border-[#0f172a] px-1.5 py-0.5 text-[10px] font-black leading-none",
                     active ? "bg-white text-[#0f172a]" : "bg-[#f4f8fb] text-[#475569]"
                   )}
                 >
@@ -352,34 +369,26 @@ export function ProductCatalogShowcase({
         </div>
       </div>
 
-      {/* PRODUCT CARDS */}
+      {/* FILTERED RESULTS */}
       {filteredProducts.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed border-[#0f172a] bg-white p-10 text-center shadow-[4px_4px_0px_#0f172a]">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-[#0f172a] bg-[#ecfeff] text-[#0f172a] shadow-[3px_3px_0px_#0f172a]">
             <PackageOpen className="h-6 w-6" />
           </div>
-          <p className="text-sm font-black text-[#0f172a]">
-            {products.length === 0
-              ? "Katalog produk masih kosong"
-              : "Tidak ada produk yang cocok"}
-          </p>
+          <p className="text-sm font-black text-[#0f172a]">Tidak ada produk yang cocok</p>
           <p className="mt-1 text-xs font-medium text-[#475569]">
-            {products.length === 0
-              ? "Produk & layanan terbaru akan segera hadir di halaman ini."
-              : "Coba ubah kata kunci pencarian atau pilih kategori lainnya."}
+            Coba ubah kata kunci pencarian atau pilih kategori lainnya.
           </p>
-          {selectedType !== "all" || searchQuery ? (
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedType("all");
-                setSearchQuery("");
-              }}
-              className="mt-4 inline-flex items-center rounded-xl border-2 border-[#0f172a] bg-[#22d3ee] px-4 py-2 text-xs font-black text-[#0f172a] shadow-[3px_3px_0px_#0f172a] cursor-pointer"
-            >
-              Reset Filter
-            </button>
-          ) : null}
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedType("all");
+              setSearchQuery("");
+            }}
+            className="mt-4 inline-flex h-9 items-center rounded-xl border-2 border-[#0f172a] bg-[#22d3ee] px-4 text-xs font-black text-[#0f172a] shadow-[3px_3px_0px_#0f172a] cursor-pointer"
+          >
+            Reset Filter
+          </button>
         </div>
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
@@ -427,7 +436,6 @@ export function ProductCatalogShowcase({
                     </div>
                   )}
 
-                  {/* Top-left Type Badge */}
                   <span
                     className={cn(
                       "absolute top-2.5 left-2.5 inline-flex items-center gap-1 rounded-lg border-2 border-[#0f172a] px-2 py-0.5 text-[10px] font-black uppercase shadow-[2px_2px_0px_#0f172a]",
@@ -439,7 +447,6 @@ export function ProductCatalogShowcase({
                     {meta.shortLabel}
                   </span>
 
-                  {/* Top-right Discount / Featured Sticker */}
                   {discountPct > 0 ? (
                     <span className="absolute top-2.5 right-2.5 rounded-lg border-2 border-[#0f172a] bg-[#fda4af] px-2 py-0.5 text-[10px] font-black uppercase text-[#0f172a] shadow-[2px_2px_0px_#0f172a]">
                       -{discountPct}%
@@ -500,14 +507,14 @@ export function ProductCatalogShowcase({
                       <Link
                         href={`/p/${product.slug}`}
                         onClick={() => onProductClick?.(product.id)}
-                        className="inline-flex h-8.5 items-center rounded-lg border-2 border-[#0f172a] bg-white px-2.5 text-[11px] font-black text-[#0f172a] shadow-[2px_2px_0px_#0f172a] hover:bg-[#f3e8ff] transition-colors"
+                        className="inline-flex h-9 items-center rounded-lg border-2 border-[#0f172a] bg-white px-2.5 text-[11px] font-black text-[#0f172a] shadow-[2px_2px_0px_#0f172a] hover:bg-[#f3e8ff] transition-colors"
                       >
                         Detail
                       </Link>
                       <Link
                         href={`/checkout/${product.slug}`}
                         onClick={() => onProductClick?.(product.id)}
-                        className="inline-flex h-8.5 items-center gap-1 rounded-lg border-2 border-[#0f172a] bg-[#22d3ee] px-2.5 text-[11px] font-black text-[#0f172a] shadow-[2px_2px_0px_#0f172a] hover:bg-[#06b6d4] transition-colors"
+                        className="inline-flex h-9 items-center gap-1 rounded-lg border-2 border-[#0f172a] bg-[#22d3ee] px-2.5 text-[11px] font-black text-[#0f172a] shadow-[2px_2px_0px_#0f172a] hover:bg-[#06b6d4] transition-colors"
                       >
                         <span>{product.type === "donation" ? "Dukung" : "Beli"}</span>
                         <ArrowUpRight className="h-3.5 w-3.5" />
@@ -520,7 +527,6 @@ export function ProductCatalogShowcase({
           })}
         </div>
       ) : (
-        /* COMPACT LIST VIEW */
         <div className="space-y-3">
           {filteredProducts.map((product) => {
             const meta = PRODUCT_TYPE_META[product.type];

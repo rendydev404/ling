@@ -64,7 +64,7 @@ export function AdminShell({
   return (
     <div className="min-h-screen lg:flex">
       {/* DESKTOP SIDEBAR */}
-      <aside className="hidden lg:block lg:w-68 lg:shrink-0 lg:sticky lg:top-0 lg:h-screen">
+      <aside className="hidden lg:block lg:w-72 lg:shrink-0 lg:sticky lg:top-0 lg:h-screen">
         <div className="flex h-full flex-col bg-white border-r-2 border-[#0f172a]">
           <div className="flex h-16 items-center justify-between px-5 border-b-2 border-[#0f172a] bg-[#ecfeff]">
             <Link href="/admin" className="flex items-center gap-2.5 min-w-0">

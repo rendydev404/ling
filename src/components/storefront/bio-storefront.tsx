@@ -121,10 +121,10 @@ export function BioStorefront({
 
   return (
     <div
-      className="min-h-screen transition-colors"
+      className="min-h-screen flex flex-col transition-colors"
       style={{ backgroundColor: theme.backgroundColor, color: theme.textColor }}
     >
-      {/* Top Customer Utility Bar (Zero Admin Links Exposed) */}
+      {/* Top Customer Utility Bar */}
       <header
         className="sticky top-0 z-30 border-b-2"
         style={{
@@ -132,10 +132,10 @@ export function BioStorefront({
           borderColor: theme.borderColor,
         }}
       >
-        <div className="mx-auto flex h-15 max-w-5xl items-center justify-between px-4">
-          <Link href="/" className="flex items-center gap-2 font-black text-sm tracking-tight">
+        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6">
+          <Link href="/" className="flex items-center gap-2.5 font-black text-sm tracking-tight">
             <span
-              className="flex h-8.5 w-8.5 items-center justify-center rounded-xl border-2 text-xs font-black shadow-[2px_2px_0px_#0f172a]"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border-2 text-xs font-black shadow-[2px_2px_0px_#0f172a]"
               style={{
                 backgroundColor: theme.accentColor,
                 color: theme.accentTextColor,
@@ -144,13 +144,13 @@ export function BioStorefront({
             >
               {settings.brand_name.slice(0, 1).toUpperCase()}
             </span>
-            <span>@{settings.handle}</span>
+            <span className="truncate max-w-[140px] sm:max-w-none">@{settings.handle}</span>
           </Link>
 
           <nav className="flex items-center gap-2">
             <Link
               href="/products"
-              className="inline-flex h-8.5 items-center gap-1.5 rounded-xl border-2 px-3 text-xs font-black shadow-[2px_2px_0px_#0f172a] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5"
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl border-2 px-3 text-xs font-black shadow-[2px_2px_0px_#0f172a] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5"
               style={{
                 backgroundColor: theme.accentColor,
                 borderColor: theme.borderColor,
@@ -162,7 +162,7 @@ export function BioStorefront({
             </Link>
             <Link
               href="/portal"
-              className="inline-flex h-8.5 items-center gap-1.5 rounded-xl border-2 px-3 text-xs font-black shadow-[2px_2px_0px_#0f172a] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5"
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl border-2 px-3 text-xs font-black shadow-[2px_2px_0px_#0f172a] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5"
               style={{
                 backgroundColor: theme.surfaceColor,
                 borderColor: theme.borderColor,
@@ -174,7 +174,7 @@ export function BioStorefront({
             </Link>
             <Link
               href="/affiliate"
-              className="inline-flex h-8.5 items-center gap-1.5 rounded-xl border-2 px-3 text-xs font-black shadow-[2px_2px_0px_#0f172a] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5"
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl border-2 px-3 text-xs font-black shadow-[2px_2px_0px_#0f172a] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5"
               style={{
                 backgroundColor: secondaryAccent,
                 borderColor: theme.borderColor,
@@ -188,51 +188,54 @@ export function BioStorefront({
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 pb-20 pt-6 sm:pt-8">
-        {/* Neobrutalist Creator Hero Banner Card */}
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 sm:px-6 pb-16 pt-6 sm:pt-8">
+        {/* Clean Neobrutalist Window Hero Card (Zero Negative-Margin Overlap) */}
         <section
-          className="relative overflow-hidden rounded-3xl border-2 shadow-[6px_6px_0px_#0f172a]"
+          className="overflow-hidden rounded-2xl sm:rounded-3xl border-2 shadow-[6px_6px_0px_#0f172a]"
           style={{
             backgroundColor: theme.surfaceColor,
             borderColor: theme.borderColor,
           }}
         >
-          {/* Decorative Top Accent Strip */}
-          <div className="h-20 sm:h-24 border-b-2 border-[#0f172a] bg-[#67e8f9] relative overflow-hidden">
-            <div
-              className="absolute inset-0 opacity-25"
-              style={{
-                backgroundImage: "radial-gradient(#0f172a 1.5px, transparent 1.5px)",
-                backgroundSize: "14px 14px",
-              }}
-            />
-            <div
-              className="absolute -right-6 -top-6 h-28 w-28 rounded-full border-2 border-[#0f172a]"
-              style={{ backgroundColor: secondaryAccent }}
-            />
+          {/* Neobrutalist Window Top Strip */}
+          <div
+            className="flex items-center justify-between border-b-2 bg-[#67e8f9] px-4 sm:px-7 py-3"
+            style={{ borderColor: theme.borderColor }}
+          >
+            <div className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full border-2 border-[#0f172a] bg-[#a855f7]" />
+              <span className="h-3 w-3 rounded-full border-2 border-[#0f172a] bg-[#fde047]" />
+              <span className="h-3 w-3 rounded-full border-2 border-[#0f172a] bg-white" />
+              <span className="ml-1.5 text-[11px] font-black uppercase tracking-wider text-[#0f172a]">
+                Official Storefront
+              </span>
+            </div>
+
             <button
               type="button"
               onClick={handleSharePage}
-              className="absolute top-3 right-3 inline-flex items-center gap-1.5 rounded-xl border-2 border-[#0f172a] bg-white px-3 py-1.5 text-xs font-black text-[#0f172a] shadow-[2px_2px_0px_#0f172a] cursor-pointer hover:bg-[#f3e8ff] transition-colors"
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg border-2 border-[#0f172a] bg-white px-3 text-xs font-black text-[#0f172a] shadow-[2px_2px_0px_#0f172a] cursor-pointer transition-all hover:bg-[#f3e8ff] hover:-translate-x-0.5 hover:-translate-y-0.5"
             >
               <Share2 className="h-3.5 w-3.5" />
               <span>Bagikan</span>
             </button>
           </div>
 
-          <div className="px-5 pb-6 sm:px-8 sm:pb-7">
-            <div className="-mt-11 sm:-mt-12 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-              <div className="flex items-end gap-4">
+          {/* Main Identity Content */}
+          <div className="p-5 sm:p-7">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-5">
+              {/* Avatar Block */}
+              <div className="shrink-0">
                 {settings.avatar_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={settings.avatar_url}
                     alt={settings.brand_name}
-                    className="h-22 w-22 sm:h-24 sm:w-24 rounded-2xl border-2 border-[#0f172a] bg-white object-cover shadow-[4px_4px_0px_#0f172a]"
+                    className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl border-2 border-[#0f172a] bg-white object-cover shadow-[4px_4px_0px_#0f172a]"
                   />
                 ) : (
                   <div
-                    className="flex h-22 w-22 sm:h-24 sm:w-24 shrink-0 items-center justify-center rounded-2xl border-2 border-[#0f172a] text-2xl font-black shadow-[4px_4px_0px_#0f172a]"
+                    className="flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-2xl border-2 border-[#0f172a] text-2xl sm:text-3xl font-black shadow-[4px_4px_0px_#0f172a]"
                     style={{
                       backgroundColor: theme.accentColor,
                       color: theme.accentTextColor,
@@ -241,102 +244,113 @@ export function BioStorefront({
                     {settings.brand_name.slice(0, 2).toUpperCase()}
                   </div>
                 )}
-
-                <div className="pb-1">
-                  <div className="flex items-center gap-1.5">
-                    <h1 className="text-xl sm:text-2xl font-black tracking-tight">
-                      {settings.brand_name}
-                    </h1>
-                    {settings.verified_badge && (
-                      <BadgeCheck
-                        className="h-5 w-5 shrink-0"
-                        style={{ color: secondaryAccent }}
-                      />
-                    )}
-                  </div>
-                  <span
-                    className="mt-1 inline-block rounded-lg border-2 border-[#0f172a] px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider shadow-[2px_2px_0px_#0f172a]"
-                    style={{
-                      backgroundColor: "#f3e8ff",
-                      color: "#0f172a",
-                    }}
-                  >
-                    {settings.tagline}
-                  </span>
-                </div>
               </div>
 
-              {/* Social Links */}
-              {settings.social_links.length > 0 && (
-                <div className="flex flex-wrap items-center gap-2">
-                  {settings.social_links.map((item, idx) => (
-                    <a
-                      key={`${item.platform}-${idx}`}
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={item.label || item.platform}
-                      className="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-[#0f172a] bg-white text-[#0f172a] shadow-[2px_2px_0px_#0f172a] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-[#ecfeff]"
-                    >
-                      <SocialIcon platform={item.platform} />
-                    </a>
-                  ))}
+              {/* Brand Details */}
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[#0f172a]">
+                        {settings.brand_name}
+                      </h1>
+                      {settings.verified_badge && (
+                        <BadgeCheck
+                          className="h-5 w-5 sm:h-6 sm:w-6 shrink-0"
+                          style={{ color: secondaryAccent }}
+                        />
+                      )}
+                    </div>
+
+                    {settings.tagline && (
+                      <span className="mt-2 inline-block rounded-lg border-2 border-[#0f172a] bg-[#f3e8ff] px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wider text-[#0f172a] shadow-[2px_2px_0px_#0f172a]">
+                        {settings.tagline}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Social Links */}
+                  {settings.social_links.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {settings.social_links.map((item, idx) => (
+                        <a
+                          key={`${item.platform}-${idx}`}
+                          href={item.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={item.label || item.platform}
+                          className="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-[#0f172a] bg-white text-[#0f172a] shadow-[2px_2px_0px_#0f172a] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-[#ecfeff]"
+                        >
+                          <SocialIcon platform={item.platform} />
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
+
+                <p
+                  className="mt-3.5 max-w-2xl text-sm font-medium leading-relaxed"
+                  style={{ color: theme.mutedTextColor }}
+                >
+                  {settings.bio}
+                </p>
+
+                {/* Trust Badges */}
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#0f172a] bg-[#ecfeff] px-2.5 py-1 text-[11px] font-extrabold text-[#0f172a]">
+                    <Zap className="h-3.5 w-3.5 text-[#0891b2]" />
+                    Akses Otomatis 24/7
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#0f172a] bg-[#f3e8ff] px-2.5 py-1 text-[11px] font-extrabold text-[#0f172a]">
+                    <ShieldCheck className="h-3.5 w-3.5 text-[#7e22ce]" />
+                    QRIS, Virtual Account, & E-Wallet
+                  </span>
+                  {products.length > 0 ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#0f172a] bg-[#fef08a] px-2.5 py-1 text-[11px] font-extrabold text-[#0f172a]">
+                      <Sparkles className="h-3.5 w-3.5 text-[#0f172a]" />
+                      {products.length} Produk & Layanan Aktif
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#0f172a] bg-[#fef08a] px-2.5 py-1 text-[11px] font-extrabold text-[#0f172a]">
+                      <Sparkles className="h-3.5 w-3.5 text-[#0f172a]" />
+                      Checkout Instan Terverifikasi
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
 
-            <p
-              className="mt-4 max-w-2xl text-xs sm:text-sm font-medium leading-relaxed"
-              style={{ color: theme.mutedTextColor }}
-            >
-              {settings.bio}
-            </p>
-
-            {/* Customer Trust Chips */}
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#0f172a] bg-[#ecfeff] px-2.5 py-1 text-[11px] font-extrabold text-[#0f172a]">
-                <Zap className="h-3.5 w-3.5 text-[#0891b2]" />
-                Akses Otomatis 24/7
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#0f172a] bg-[#f3e8ff] px-2.5 py-1 text-[11px] font-extrabold text-[#0f172a]">
-                <ShieldCheck className="h-3.5 w-3.5 text-[#7e22ce]" />
-                QRIS, VA, & E-Wallet Resmi
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#0f172a] bg-[#fef08a] px-2.5 py-1 text-[11px] font-extrabold text-[#0f172a]">
-                <Sparkles className="h-3.5 w-3.5 text-[#0f172a]" />
-                {products.length} Produk & Layanan Tersedia
-              </span>
-            </div>
-
-            {/* Tab Switcher: Katalog Produk vs Bio Links */}
+            {/* Tab Switcher (only shown if custom Bio Blocks also exist) */}
             {blocks.length > 0 && (
-              <div className="mt-5 inline-grid grid-cols-2 gap-1.5 rounded-xl border-2 border-[#0f172a] bg-[#f4f8fb] p-1.5 w-full sm:w-auto sm:min-w-80 shadow-[3px_3px_0px_#0f172a]">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("shop")}
-                  className={cn(
-                    "inline-flex items-center justify-center gap-1.5 rounded-lg border-2 px-4 py-2 text-xs font-black transition-all cursor-pointer",
-                    activeTab === "shop"
-                      ? "border-[#0f172a] bg-[#22d3ee] text-[#0f172a] shadow-[2px_2px_0px_#0f172a]"
-                      : "border-transparent text-[#475569] hover:text-[#0f172a]"
-                  )}
-                >
-                  <LayoutGrid className="h-3.5 w-3.5" />
-                  Katalog Produk ({products.length})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("links")}
-                  className={cn(
-                    "inline-flex items-center justify-center gap-1.5 rounded-lg border-2 px-4 py-2 text-xs font-black transition-all cursor-pointer",
-                    activeTab === "links"
-                      ? "border-[#0f172a] bg-[#a855f7] text-white shadow-[2px_2px_0px_#0f172a]"
-                      : "border-transparent text-[#475569] hover:text-[#0f172a]"
-                  )}
-                >
-                  <Link2 className="h-3.5 w-3.5" />
-                  Tautan & Info ({blocks.length})
-                </button>
+              <div className="mt-6 pt-5 border-t-2 border-[#0f172a]/15">
+                <div className="inline-grid grid-cols-2 gap-1.5 rounded-xl border-2 border-[#0f172a] bg-[#f4f8fb] p-1.5 w-full sm:w-80 shadow-[3px_3px_0px_#0f172a]">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("shop")}
+                    className={cn(
+                      "inline-flex items-center justify-center gap-1.5 rounded-lg border-2 px-4 py-2 text-xs font-black transition-all cursor-pointer",
+                      activeTab === "shop"
+                        ? "border-[#0f172a] bg-[#22d3ee] text-[#0f172a] shadow-[2px_2px_0px_#0f172a]"
+                        : "border-transparent text-[#475569] hover:text-[#0f172a]"
+                    )}
+                  >
+                    <LayoutGrid className="h-3.5 w-3.5" />
+                    Katalog ({products.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("links")}
+                    className={cn(
+                      "inline-flex items-center justify-center gap-1.5 rounded-lg border-2 px-4 py-2 text-xs font-black transition-all cursor-pointer",
+                      activeTab === "links"
+                        ? "border-[#0f172a] bg-[#a855f7] text-white shadow-[2px_2px_0px_#0f172a]"
+                        : "border-transparent text-[#475569] hover:text-[#0f172a]"
+                    )}
+                  >
+                    <Link2 className="h-3.5 w-3.5" />
+                    Tautan ({blocks.length})
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -569,7 +583,6 @@ export function BioStorefront({
                 );
               }
 
-              // Standard Link Button
               const isExternal = block.url?.startsWith("http");
               const linkClass = cn(
                 "group flex items-center justify-between gap-3 border-2 px-4 py-3.5 shadow-[4px_4px_0px_#0f172a] transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#0f172a]",
@@ -644,12 +657,14 @@ export function BioStorefront({
             })}
           </section>
         )}
+      </main>
 
-        {/* Footer */}
-        <footer
-          className="mt-14 border-t-2 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-semibold"
-          style={{ borderColor: theme.borderColor, color: theme.mutedTextColor }}
-        >
+      {/* Clean Sticky-Bottom Footer */}
+      <footer
+        className="border-t-2 bg-white py-5"
+        style={{ borderColor: theme.borderColor, color: theme.mutedTextColor }}
+      >
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-semibold">
           <div className="flex items-center gap-2">
             <Package className="h-4 w-4" style={{ color: secondaryAccent }} />
             <span className="font-black" style={{ color: theme.textColor }}>
@@ -659,8 +674,8 @@ export function BioStorefront({
           <p className="text-center sm:text-right">
             Pembayaran instan didukung Midtrans (QRIS, Virtual Account, E-Wallet)
           </p>
-        </footer>
-      </main>
+        </div>
+      </footer>
     </div>
   );
 }
