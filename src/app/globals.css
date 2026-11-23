@@ -1,30 +1,37 @@
 @import "tailwindcss";
 
 :root {
-  --bg-page: #f8fafc;
+  --bg-page: #f4f8fb;
   --bg-surface: #ffffff;
-  --bg-subtle: #f1f5f9;
-  --border-default: #e2e8f0;
-  --border-strong: #cbd5e1;
+  --bg-subtle: #ecfeff;
+  --border-default: #0f172a;
+  --border-strong: #0f172a;
   --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
-  --brand-primary: #059669;
-  --brand-primary-hover: #047857;
-  --brand-primary-soft: #ecfdf5;
-  --brand-primary-border: #a7f3d0;
-  --danger: #dc2626;
-  --danger-hover: #b91c1c;
-  --danger-soft: #fef2f2;
-  --warning: #d97706;
-  --warning-soft: #fffbeb;
-  --info: #2563eb;
-  --info-soft: #eff6ff;
+  --text-secondary: #334155;
+  --text-muted: #475569;
+  --brand-primary: #22d3ee;
+  --brand-primary-hover: #06b6d4;
+  --brand-primary-text: #0e7490;
+  --brand-primary-soft: #cffafe;
+  --brand-primary-border: #0f172a;
+  --brand-secondary: #a855f7;
+  --brand-secondary-hover: #9333ea;
+  --brand-secondary-soft: #f3e8ff;
+  --danger: #e11d48;
+  --danger-hover: #be123c;
+  --danger-soft: #ffe4e6;
+  --warning: #eab308;
+  --warning-soft: #fef08a;
+  --info: #a855f7;
+  --info-soft: #f3e8ff;
+  --neo-shadow-sm: 2px 2px 0px #0f172a;
+  --neo-shadow: 4px 4px 0px #0f172a;
+  --neo-shadow-lg: 6px 6px 0px #0f172a;
 }
 
 @layer base {
   html {
-    font-family: var(--font-plus-jakarta), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: var(--font-space-grotesk), var(--font-plus-jakarta), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     background-color: var(--bg-page);
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
@@ -35,7 +42,14 @@
     margin: 0;
     min-height: 100vh;
     background-color: var(--bg-page);
+    background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+    background-size: 22px 22px;
     color: var(--text-primary);
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-space-grotesk), var(--font-plus-jakarta), sans-serif;
+    letter-spacing: -0.02em;
   }
 
   * {
@@ -43,21 +57,22 @@
   }
 }
 
-/* Custom scrollbar (solid, clean) */
+/* Neobrutalism crisp scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #f4f8fb;
+  border-left: 2px solid #0f172a;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 9999px;
+  background: #22d3ee;
+  border: 2px solid #0f172a;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #a855f7;
 }

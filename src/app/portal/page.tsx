@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createServerSupabaseClient, isSupabaseServerConfigured } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/supabase/auth";
 import { BuyerPortalClient, type PortalData } from "@/components/portal/buyer-portal-client";
@@ -6,73 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default async function BuyerPortalPage() {
   if (!isSupabaseServerConfigured()) {
-    const demoData: PortalData = {
-      buyerEmail: "pembeli@demo.local",
-      isDemoMode: true,
-      orders: [
-        {
-          id: "ord-1",
-          order_number: "LNG-261123-8X2KA",
-          total_amount: 299000,
-          payment_status: "paid",
-          shipping_status: "not_applicable",
-          shipping_courier: null,
-          shipping_tracking_number: null,
-          created_at: "2026-11-23T14:00:00.000Z",
-        },
-      ],
-      digitalAssets: [
-        {
-          id: "asset-demo-1",
-          product_title: "Notion Creator OS & Finance Tracker",
-          title: "Link Duplikasi Workspace Notion + Panduan PDF",
-          asset_type: "external_url",
-          external_url: "https://notion.so",
-          license_key_value: "LING-PRO-8842-K91",
-        },
-      ],
-      courses: [
-        {
-          product_id: "prod-course-1",
-          slug: "kelas-bangun-bisnis-digital",
-          title: "Masterclass: Bangun Bisnis Produk Digital dari Nol",
-          total_lessons: 3,
-          completed_lessons: 1,
-        },
-      ],
-      bookings: [
-        {
-          id: "book-demo-1",
-          product_title: "Sesi Konsultasi & Audit Bisnis 1-on-1 (60 Menit)",
-          booking_date: "2026-12-02",
-          start_time: "14:00",
-          end_time: "15:00",
-          meeting_link: "https://meet.google.com/new",
-          status: "confirmed",
-        },
-      ],
-      tickets: [
-        {
-          id: "tkt-demo-1",
-          product_title: "Live Workshop: Scale Up Penjualan dengan QRIS & Affiliate",
-          ticket_code: "EVT-9K4M2P",
-          event_date: "2026-12-12T19:00:00+07:00",
-          event_location: "Zoom Webinar",
-          event_meeting_url: "https://zoom.us",
-          status: "valid",
-        },
-      ],
-      memberships: [
-        {
-          id: "mem-demo-1",
-          product_title: "Ling Inner Circle — Komunitas & Riset Bulanan",
-          status: "active",
-          expires_at: "2026-12-23T14:00:00.000Z",
-          community_link: "https://t.me/+example-inner-circle",
-        },
-      ],
-    };
-    return <BuyerPortalClient data={demoData} />;
+    redirect("/login?next=/portal");
   }
 
   const { user } = await requireAuth("/login?next=/portal");

@@ -1,16 +1,14 @@
 import { createServerSupabaseClient, isSupabaseServerConfigured } from "@/lib/supabase/server";
-import { DEMO_PRODUCTS } from "@/lib/demo-data";
 import type { Product } from "@/types/database";
 import { ProductsManager } from "@/components/admin/products-manager";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminProductsPage() {
-  let products: Product[] = DEMO_PRODUCTS;
-  let isDemoMode = true;
+  let products: Product[] = [];
+  const isDemoMode = !isSupabaseServerConfigured();
 
-  if (isSupabaseServerConfigured()) {
-    isDemoMode = false;
+  if (!isDemoMode) {
     const supabase = await createServerSupabaseClient();
     const { data } = await supabase
       .from("products")

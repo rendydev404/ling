@@ -130,61 +130,107 @@ export function VouchersManager({
             />
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-[#e2e8f0] bg-[#f8fafc] text-xs font-semibold text-[#64748b]">
-                <tr>
-                  <th className="px-5 py-3">Kode</th>
-                  <th className="px-5 py-3">Potongan</th>
-                  <th className="px-5 py-3">Min. Belanja</th>
-                  <th className="px-5 py-3">Pemakaian</th>
-                  <th className="px-5 py-3">Berakhir</th>
-                  <th className="px-5 py-3">Status</th>
-                  <th className="px-5 py-3 text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#e2e8f0]">
-                {vouchers.map((v) => (
-                  <tr key={v.id} className="hover:bg-[#f8fafc]">
-                    <td className="px-5 py-3.5 font-mono text-xs font-extrabold text-[#059669]">
+          <>
+            {/* Mobile Voucher Cards */}
+            <div className="divide-y-2 divide-[#0f172a] md:hidden">
+              {vouchers.map((v) => (
+                <div key={v.id} className="p-4 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="rounded-md border-2 border-[#0f172a] bg-[#67e8f9] px-2.5 py-0.5 font-mono text-xs font-black text-[#0f172a] shadow-[2px_2px_0px_#0f172a]">
                       {v.code}
-                    </td>
-                    <td className="px-5 py-3.5 text-xs font-bold text-[#0f172a]">
-                      {v.discount_type === "percentage"
-                        ? `${v.discount_value}%${
-                            v.max_discount_amount ? ` (maks ${formatIDR(v.max_discount_amount)})` : ""
-                          }`
-                        : formatIDR(v.discount_value)}
-                    </td>
-                    <td className="px-5 py-3.5 text-xs text-[#475569]">
-                      {formatIDR(v.min_order_amount)}
-                    </td>
-                    <td className="px-5 py-3.5 text-xs text-[#475569]">
-                      {v.used_count} / {v.max_uses ?? "∞"}
-                    </td>
-                    <td className="px-5 py-3.5 text-xs text-[#64748b]">
-                      {v.expires_at ? formatDateID(v.expires_at) : "Selamanya"}
-                    </td>
-                    <td className="px-5 py-3.5">
+                    </span>
+                    <div className="flex items-center gap-2">
                       <Badge variant={v.is_active ? "success" : "neutral"}>
                         {v.is_active ? "Aktif" : "Nonaktif"}
                       </Badge>
-                    </td>
-                    <td className="px-5 py-3.5 text-right">
                       <button
                         type="button"
                         onClick={() => setDeleteTarget(v)}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#fecaca] text-[#dc2626] hover:bg-[#fef2f2] cursor-pointer"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border-2 border-[#0f172a] bg-[#fda4af] text-[#0f172a] shadow-[2px_2px_0px_#0f172a] cursor-pointer"
                         aria-label="Hapus voucher"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
-                    </td>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-black text-[#0f172a]">
+                      Potongan:{" "}
+                      {v.discount_type === "percentage"
+                        ? `${v.discount_value}%`
+                        : formatIDR(v.discount_value)}
+                    </span>
+                    <span className="font-bold text-[#475569]">
+                       Terpakai {v.used_count}/{v.max_uses ?? "∞"}
+                    </span>
+                  </div>
+                  <p className="text-[11px] font-medium text-[#64748b]">
+                    Min. belanja {formatIDR(v.min_order_amount)} · Berakhir:{" "}
+                    {v.expires_at ? formatDateID(v.expires_at) : "Selamanya"}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="border-b-2 border-[#0f172a] bg-[#ecfeff] text-xs font-extrabold uppercase tracking-wider text-[#0f172a]">
+                  <tr>
+                    <th className="px-5 py-3">Kode</th>
+                    <th className="px-5 py-3">Potongan</th>
+                    <th className="px-5 py-3">Min. Belanja</th>
+                    <th className="px-5 py-3">Pemakaian</th>
+                    <th className="px-5 py-3">Berakhir</th>
+                    <th className="px-5 py-3">Status</th>
+                    <th className="px-5 py-3 text-right">Aksi</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y-2 divide-[#0f172a]/15">
+                  {vouchers.map((v) => (
+                    <tr key={v.id} className="hover:bg-[#f3e8ff]/40">
+                      <td className="px-5 py-3.5 font-mono text-xs font-extrabold text-[#0f172a]">
+                        <span className="rounded-md border-2 border-[#0f172a] bg-[#67e8f9] px-2 py-0.5 shadow-[2px_2px_0px_#0f172a]">
+                          {v.code}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 text-xs font-extrabold text-[#0f172a]">
+                        {v.discount_type === "percentage"
+                          ? `${v.discount_value}%${
+                              v.max_discount_amount ? ` (maks ${formatIDR(v.max_discount_amount)})` : ""
+                            }`
+                          : formatIDR(v.discount_value)}
+                      </td>
+                      <td className="px-5 py-3.5 text-xs font-medium text-[#334155]">
+                        {formatIDR(v.min_order_amount)}
+                      </td>
+                      <td className="px-5 py-3.5 text-xs font-bold text-[#334155]">
+                        {v.used_count} / {v.max_uses ?? "∞"}
+                      </td>
+                      <td className="px-5 py-3.5 text-xs font-medium text-[#475569]">
+                        {v.expires_at ? formatDateID(v.expires_at) : "Selamanya"}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <Badge variant={v.is_active ? "success" : "neutral"}>
+                          {v.is_active ? "Aktif" : "Nonaktif"}
+                        </Badge>
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTarget(v)}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border-2 border-[#0f172a] bg-[#fda4af] text-[#0f172a] shadow-[2px_2px_0px_#0f172a] hover:bg-[#f43f5e] hover:text-white cursor-pointer"
+                          aria-label="Hapus voucher"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </Card>
 

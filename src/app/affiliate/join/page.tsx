@@ -41,42 +41,42 @@ export default function AffiliateJoinPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] px-4 py-12 flex items-center justify-center">
+    <div className="min-h-screen px-4 py-12 flex items-center justify-center">
       <div className="w-full max-w-md space-y-5">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#475569] hover:text-[#0f172a]"
+          className="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#0f172a] bg-white px-3 py-1.5 text-xs font-extrabold text-[#0f172a] shadow-[2px_2px_0px_#0f172a] hover:bg-[#ecfeff]"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Kembali ke Storefront
         </Link>
 
         <Card className="p-6 sm:p-7 space-y-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#059669] text-white">
+          <div className="flex items-center gap-3.5">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl border-2 border-[#0f172a] bg-[#a855f7] text-white shadow-[3px_3px_0px_#0f172a]">
               <Users className="h-5 w-5" />
             </div>
             <div>
               <h1 className="text-lg font-extrabold text-[#0f172a]">
                 Program Affiliate Partner
               </h1>
-              <p className="text-xs text-[#64748b]">
-                Dapatkan komisi hingga 30% dari setiap transaksi via link Anda.
+              <p className="text-xs font-medium text-[#475569]">
+                Dapatkan komisi dari setiap transaksi melalui link referral Anda.
               </p>
             </div>
           </div>
 
-          <ul className="space-y-2 text-xs text-[#334155]">
+          <ul className="space-y-2.5 rounded-xl border-2 border-[#0f172a] bg-[#f3e8ff] p-4 text-xs font-bold text-[#0f172a]">
             <li className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-[#059669] shrink-0" />
+              <CheckCircle2 className="h-4 w-4 text-[#0891b2] shrink-0" />
               Cookie atribusi 30 hari otomatis pada setiap kunjungan
             </li>
             <li className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-[#059669] shrink-0" />
+              <CheckCircle2 className="h-4 w-4 text-[#0891b2] shrink-0" />
               Dashboard pelacakan klik, konversi, dan saldo real-time
             </li>
             <li className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-[#059669] shrink-0" />
+              <CheckCircle2 className="h-4 w-4 text-[#0891b2] shrink-0" />
               Pencairan komisi langsung ke rekening bank atau e-wallet Anda
             </li>
           </ul>
@@ -86,7 +86,7 @@ export default function AffiliateJoinPage() {
               label="Kode Referral Pilihan (Opsional)"
               value={customCode}
               onChange={(e) => setCustomCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
-              placeholder="Contoh: BUDI2026"
+              placeholder="Contoh: KREATOR01"
               helperText="Kosongkan untuk generate kode otomatis."
             />
             <Button type="submit" size="lg" className="w-full" isLoading={loading}>

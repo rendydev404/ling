@@ -33,78 +33,83 @@ import { formatIDR } from "@/lib/utils";
 
 const THEME_PRESETS: Array<{ id: ThemeConfig["preset"]; label: string; config: ThemeConfig }> = [
   {
+    id: "neo-cyan",
+    label: "Neo Cyan & Purple (Default)",
+    config: {
+      preset: "neo-cyan",
+      backgroundColor: "#f4f8fb",
+      surfaceColor: "#ffffff",
+      borderColor: "#0f172a",
+      textColor: "#0f172a",
+      mutedTextColor: "#334155",
+      accentColor: "#22d3ee",
+      accentTextColor: "#0f172a",
+      secondaryAccentColor: "#a855f7",
+      buttonRadius: "md",
+    },
+  },
+  {
+    id: "neo-purple",
+    label: "Neo Purple & Cyan",
+    config: {
+      preset: "neo-purple",
+      backgroundColor: "#faf5ff",
+      surfaceColor: "#ffffff",
+      borderColor: "#0f172a",
+      textColor: "#0f172a",
+      mutedTextColor: "#334155",
+      accentColor: "#a855f7",
+      accentTextColor: "#ffffff",
+      secondaryAccentColor: "#22d3ee",
+      buttonRadius: "md",
+    },
+  },
+  {
     id: "clean-light",
-    label: "Clean Light",
+    label: "Crisp Ice Cyan",
     config: {
       preset: "clean-light",
-      backgroundColor: "#f8fafc",
+      backgroundColor: "#ecfeff",
       surfaceColor: "#ffffff",
-      borderColor: "#e2e8f0",
+      borderColor: "#0f172a",
       textColor: "#0f172a",
-      mutedTextColor: "#475569",
-      accentColor: "#059669",
-      accentTextColor: "#ffffff",
+      mutedTextColor: "#334155",
+      accentColor: "#06b6d4",
+      accentTextColor: "#0f172a",
+      secondaryAccentColor: "#9333ea",
       buttonRadius: "xl",
     },
   },
   {
     id: "warm-paper",
-    label: "Warm Paper",
+    label: "Solar Pop Brutal",
     config: {
       preset: "warm-paper",
-      backgroundColor: "#faf7f2",
+      backgroundColor: "#fefce8",
       surfaceColor: "#ffffff",
-      borderColor: "#e7e0d4",
-      textColor: "#1c1917",
-      mutedTextColor: "#57534e",
-      accentColor: "#c2410c",
-      accentTextColor: "#ffffff",
-      buttonRadius: "xl",
+      borderColor: "#0f172a",
+      textColor: "#0f172a",
+      mutedTextColor: "#334155",
+      accentColor: "#22d3ee",
+      accentTextColor: "#0f172a",
+      secondaryAccentColor: "#a855f7",
+      buttonRadius: "none",
     },
   },
   {
     id: "slate-dark",
-    label: "Slate Dark",
+    label: "Cyber Slate Dark",
     config: {
       preset: "slate-dark",
       backgroundColor: "#0f172a",
       surfaceColor: "#1e293b",
-      borderColor: "#334155",
+      borderColor: "#22d3ee",
       textColor: "#f8fafc",
-      mutedTextColor: "#94a3b8",
-      accentColor: "#10b981",
-      accentTextColor: "#022c22",
-      buttonRadius: "xl",
-    },
-  },
-  {
-    id: "forest-crisp",
-    label: "Forest Crisp",
-    config: {
-      preset: "forest-crisp",
-      backgroundColor: "#f0fdf4",
-      surfaceColor: "#ffffff",
-      borderColor: "#bbf7d0",
-      textColor: "#052e16",
-      mutedTextColor: "#166534",
-      accentColor: "#15803d",
-      accentTextColor: "#ffffff",
+      mutedTextColor: "#cbd5e1",
+      accentColor: "#22d3ee",
+      accentTextColor: "#0f172a",
+      secondaryAccentColor: "#a855f7",
       buttonRadius: "md",
-    },
-  },
-  {
-    id: "midnight-ink",
-    label: "Midnight Ink",
-    config: {
-      preset: "midnight-ink",
-      backgroundColor: "#111827",
-      surfaceColor: "#1f2937",
-      borderColor: "#374151",
-      textColor: "#f9fafb",
-      mutedTextColor: "#9ca3af",
-      accentColor: "#3b82f6",
-      accentTextColor: "#ffffff",
-      buttonRadius: "full",
     },
   },
 ];
@@ -326,30 +331,30 @@ export function PageBuilderClient({
                   return (
                     <div
                       key={block.id}
-                      className="flex items-center justify-between gap-3 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-4 py-3"
+                      className="flex items-center justify-between gap-3 rounded-xl border-2 border-[#0f172a] bg-white px-4 py-3 shadow-[3px_3px_0px_#0f172a]"
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="rounded-md bg-white border border-[#e2e8f0] px-1.5 py-0.5 text-[10px] font-bold uppercase text-[#475569]">
+                          <span className="rounded-md bg-[#f3e8ff] border-2 border-[#0f172a] px-2 py-0.5 text-[10px] font-black uppercase text-[#0f172a]">
                             {block.type}
                           </span>
-                          <p className="text-sm font-bold text-[#0f172a] truncate">
+                          <p className="text-sm font-black text-[#0f172a] truncate">
                             {block.type === "product"
                               ? linkedProduct?.title || "Produk tidak ditemukan"
                               : block.title || (block.type === "divider" ? "Garis Pemisah" : "Tanpa Judul")}
                           </p>
                         </div>
                         {block.url && (
-                          <p className="mt-0.5 text-xs text-[#64748b] truncate">{block.url}</p>
+                          <p className="mt-0.5 text-xs font-semibold text-[#475569] truncate">{block.url}</p>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex items-center gap-1.5 shrink-0">
                         <button
                           type="button"
                           onClick={() => moveBlock(idx, -1)}
                           disabled={idx === 0}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#e2e8f0] bg-white text-[#475569] hover:text-[#0f172a] disabled:opacity-35 cursor-pointer"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-[#0f172a] bg-white text-[#0f172a] shadow-[2px_2px_0px_#0f172a] hover:bg-[#ecfeff] disabled:opacity-35 cursor-pointer"
                           aria-label="Geser naik"
                         >
                           <ArrowUp className="h-3.5 w-3.5" />
@@ -358,7 +363,7 @@ export function PageBuilderClient({
                           type="button"
                           onClick={() => moveBlock(idx, 1)}
                           disabled={idx === blocks.length - 1}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#e2e8f0] bg-white text-[#475569] hover:text-[#0f172a] disabled:opacity-35 cursor-pointer"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-[#0f172a] bg-white text-[#0f172a] shadow-[2px_2px_0px_#0f172a] hover:bg-[#ecfeff] disabled:opacity-35 cursor-pointer"
                           aria-label="Geser turun"
                         >
                           <ArrowDown className="h-3.5 w-3.5" />
@@ -366,13 +371,15 @@ export function PageBuilderClient({
                         <button
                           type="button"
                           onClick={() => toggleBlockVisibility(block.id)}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#e2e8f0] bg-white text-[#475569] hover:text-[#0f172a] cursor-pointer"
+                          className={`flex h-8 w-8 items-center justify-center rounded-lg border-2 border-[#0f172a] shadow-[2px_2px_0px_#0f172a] cursor-pointer ${
+                            block.is_active ? "bg-[#67e8f9] text-[#0f172a]" : "bg-[#e2e8f0] text-[#64748b]"
+                          }`}
                           aria-label="Toggle visibilitas"
                         >
                           {block.is_active ? (
-                            <Eye className="h-3.5 w-3.5 text-[#059669]" />
+                            <Eye className="h-3.5 w-3.5" />
                           ) : (
-                            <EyeOff className="h-3.5 w-3.5 text-[#94a3b8]" />
+                            <EyeOff className="h-3.5 w-3.5" />
                           )}
                         </button>
                         <Button
@@ -385,7 +392,7 @@ export function PageBuilderClient({
                         <button
                           type="button"
                           onClick={() => setDeleteTargetId(block.id)}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#fecaca] bg-white text-[#dc2626] hover:bg-[#fef2f2] cursor-pointer"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-[#0f172a] bg-[#ffe4e6] text-[#be123c] shadow-[2px_2px_0px_#0f172a] hover:bg-[#fda4af] cursor-pointer"
                           aria-label="Hapus blok"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -400,7 +407,7 @@ export function PageBuilderClient({
 
           {activeTab === "profile" && (
             <Card className="p-5 space-y-4">
-              <h2 className="text-sm font-bold text-[#0f172a]">Identitas Brand / Kreator</h2>
+              <h2 className="text-sm font-black uppercase tracking-wider text-[#0f172a]">Identitas Brand / Kreator</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
                   label="Nama Brand / Kreator"
@@ -436,9 +443,9 @@ export function PageBuilderClient({
                 description="Menampilkan ikon centang di sebelah nama brand Anda."
               />
 
-              <div className="border-t border-[#e2e8f0] pt-4 space-y-3">
+              <div className="border-t-2 border-[#0f172a] pt-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748b]">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-[#0f172a]">
                     Tautan Media Sosial
                   </h3>
                   <Button variant="outline" size="sm" onClick={addSocialLink}>
@@ -491,7 +498,7 @@ export function PageBuilderClient({
                             social_links: settings.social_links.filter((_, i) => i !== idx),
                           })
                         }
-                        className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#fecaca] text-[#dc2626] hover:bg-[#fef2f2] cursor-pointer"
+                        className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-[#0f172a] bg-[#ffe4e6] text-[#be123c] shadow-[2px_2px_0px_#0f172a] hover:bg-[#fda4af] cursor-pointer"
                         aria-label="Hapus tautan sosial"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -506,9 +513,9 @@ export function PageBuilderClient({
           {activeTab === "theme" && (
             <Card className="p-5 space-y-5">
               <div>
-                <h2 className="text-sm font-bold text-[#0f172a]">Preset Tema Solid Color</h2>
-                <p className="text-xs text-[#64748b]">
-                  Pilih palet warna solid yang bersih, modern, dan berkontras tinggi.
+                <h2 className="text-sm font-black uppercase tracking-wider text-[#0f172a]">Preset Tema Neobrutalism</h2>
+                <p className="text-xs font-semibold text-[#475569]">
+                  Pilih palet warna Neobrutalism dengan garis tegas dan kontras tinggi (Cyan & Purple).
                 </p>
               </div>
 
@@ -522,21 +529,23 @@ export function PageBuilderClient({
                       onClick={() =>
                         setSettings({ ...settings, theme_config: preset.config })
                       }
-                      className={`flex items-center justify-between rounded-xl border p-3.5 text-left transition-colors cursor-pointer ${
-                        selected ? "border-[#059669] bg-[#ecfdf5]" : "border-[#e2e8f0] bg-white hover:bg-[#f8fafc]"
+                      className={`flex items-center justify-between rounded-xl border-2 border-[#0f172a] p-3.5 text-left transition-all cursor-pointer ${
+                        selected
+                          ? "bg-[#ecfeff] shadow-[4px_4px_0px_#0f172a]"
+                          : "bg-white hover:bg-[#f4f8fb] shadow-[2px_2px_0px_#0f172a]"
                       }`}
                     >
                       <div>
-                        <p className="text-sm font-bold text-[#0f172a]">{preset.label}</p>
-                        <p className="text-[11px] text-[#64748b]">{preset.config.accentColor}</p>
+                        <p className="text-sm font-black text-[#0f172a]">{preset.label}</p>
+                        <p className="text-[11px] font-bold text-[#475569]">{preset.config.accentColor}</p>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <span
-                          className="h-5 w-5 rounded-full border border-[#cbd5e1]"
+                          className="h-5 w-5 rounded-md border-2 border-[#0f172a]"
                           style={{ backgroundColor: preset.config.backgroundColor }}
                         />
                         <span
-                          className="h-5 w-5 rounded-full border border-[#cbd5e1]"
+                          className="h-5 w-5 rounded-md border-2 border-[#0f172a]"
                           style={{ backgroundColor: preset.config.accentColor }}
                         />
                       </div>
@@ -545,7 +554,7 @@ export function PageBuilderClient({
                 })}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[#e2e8f0]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t-2 border-[#0f172a]">
                 <CustomSelect
                   label="Sudut Tombol & Kartu"
                   value={theme.buttonRadius}
@@ -559,14 +568,14 @@ export function PageBuilderClient({
                     })
                   }
                   options={[
-                    { value: "xl", label: "Modern Rounded (16px)" },
-                    { value: "md", label: "Subtle Rounded (8px)" },
+                    { value: "md", label: "Neobrutalist Crisp (8px)" },
+                    { value: "xl", label: "Rounded Block (16px)" },
                     { value: "full", label: "Pill / Kapsul" },
-                    { value: "none", label: "Sharp Minimalist (0px)" },
+                    { value: "none", label: "Sharp Brutalist (0px)" },
                   ]}
                 />
                 <Input
-                  label="Warna Aksen Hex"
+                  label="Warna Aksen Utama (Hex)"
                   value={theme.accentColor}
                   onChange={(e) =>
                     setSettings({
@@ -584,21 +593,25 @@ export function PageBuilderClient({
         <div className="xl:col-span-5 xl:sticky xl:top-6">
           <Card className="p-4">
             <div className="flex items-center justify-between mb-3 px-1">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-[#0f172a]">
-                <Smartphone className="h-4 w-4 text-[#059669]" />
+              <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-[#0f172a]">
+                <span className="flex h-6 w-6 items-center justify-center rounded-md border-2 border-[#0f172a] bg-[#22d3ee] shadow-[2px_2px_0px_#0f172a]">
+                  <Smartphone className="h-3.5 w-3.5 text-[#0f172a]" />
+                </span>
                 <span>Live Mobile Preview</span>
               </div>
-              <span className="text-[11px] font-medium text-[#64748b]">375px</span>
+              <span className="rounded-md border-2 border-[#0f172a] bg-[#f3e8ff] px-2 py-0.5 text-[10px] font-black text-[#0f172a]">
+                375px
+              </span>
             </div>
 
             <div
-              className="mx-auto max-w-[340px] rounded-[28px] border-4 border-[#0f172a] overflow-hidden shadow-md"
+              className="mx-auto max-w-[340px] rounded-[28px] border-4 border-[#0f172a] overflow-hidden shadow-[6px_6px_0px_#0f172a]"
               style={{ backgroundColor: theme.backgroundColor, color: theme.textColor }}
             >
               <div className="h-[540px] overflow-y-auto px-4 py-6 space-y-3">
                 <div className="flex flex-col items-center text-center">
                   <div
-                    className="flex h-16 w-16 items-center justify-center rounded-full text-lg font-extrabold"
+                    className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-[#0f172a] text-lg font-black shadow-[3px_3px_0px_#0f172a]"
                     style={{
                       backgroundColor: theme.accentColor,
                       color: theme.accentTextColor,
@@ -606,18 +619,18 @@ export function PageBuilderClient({
                   >
                     {settings.brand_name.slice(0, 2).toUpperCase()}
                   </div>
-                  <div className="mt-2.5 flex items-center gap-1">
-                    <span className="text-sm font-extrabold">{settings.brand_name}</span>
+                  <div className="mt-2.5 flex items-center gap-1.5">
+                    <span className="text-sm font-black">{settings.brand_name}</span>
                     {settings.verified_badge && (
-                      <BadgeCheck className="h-4 w-4" style={{ color: theme.accentColor }} />
+                      <BadgeCheck className="h-4 w-4" style={{ color: theme.secondaryAccentColor || "#a855f7" }} />
                     )}
                   </div>
-                  <p className="mt-1 text-[11px] leading-relaxed" style={{ color: theme.mutedTextColor }}>
+                  <p className="mt-1 text-[11px] font-medium leading-relaxed" style={{ color: theme.mutedTextColor }}>
                     {settings.bio}
                   </p>
                 </div>
 
-                <div className="space-y-2 pt-2">
+                <div className="space-y-2.5 pt-2">
                   {blocks
                     .filter((b) => b.is_active)
                     .map((block) => {
@@ -625,7 +638,7 @@ export function PageBuilderClient({
                         return (
                           <p
                             key={block.id}
-                            className="pt-2 text-[10px] font-extrabold uppercase tracking-wider"
+                            className="pt-2 text-[10px] font-black uppercase tracking-wider"
                             style={{ color: theme.mutedTextColor }}
                           >
                             {block.title}
@@ -636,6 +649,7 @@ export function PageBuilderClient({
                         return (
                           <hr
                             key={block.id}
+                            className="border-t-2"
                             style={{ borderColor: theme.borderColor }}
                           />
                         );
@@ -646,26 +660,29 @@ export function PageBuilderClient({
                         return (
                           <div
                             key={block.id}
-                            className="rounded-xl border p-3"
+                            className="rounded-xl border-2 p-3 shadow-[3px_3px_0px_#0f172a]"
                             style={{
                               backgroundColor: theme.surfaceColor,
                               borderColor: theme.borderColor,
                             }}
                           >
-                            <p className="text-xs font-bold leading-snug">{prod.title}</p>
-                            <p
-                              className="mt-1 text-[11px] font-extrabold"
-                              style={{ color: theme.accentColor }}
+                            <p className="text-xs font-black leading-snug">{prod.title}</p>
+                            <span
+                              className="mt-1.5 inline-block rounded-md border border-[#0f172a] px-2 py-0.5 text-[10px] font-black"
+                              style={{
+                                backgroundColor: theme.accentColor,
+                                color: theme.accentTextColor,
+                              }}
                             >
                               {formatIDR(prod.price)}
-                            </p>
+                            </span>
                           </div>
                         );
                       }
                       return (
                         <div
                           key={block.id}
-                          className="rounded-xl border px-3 py-2.5 text-xs font-bold"
+                          className="rounded-xl border-2 px-3 py-2.5 text-xs font-black shadow-[3px_3px_0px_#0f172a]"
                           style={{
                             backgroundColor: theme.surfaceColor,
                             borderColor: theme.borderColor,

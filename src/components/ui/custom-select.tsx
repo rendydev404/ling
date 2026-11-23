@@ -76,7 +76,7 @@ export function CustomSelect({
   return (
     <div ref={containerRef} className={cn("relative w-full space-y-1.5", className)}>
       {label && (
-        <span className="block text-xs font-semibold text-[#334155] tracking-wide">
+        <span className="block text-xs font-extrabold uppercase tracking-wider text-[#0f172a]">
           {label}
         </span>
       )}
@@ -87,17 +87,18 @@ export function CustomSelect({
         aria-expanded={open}
         onClick={() => setOpen((prev) => !prev)}
         className={cn(
-          "flex h-10 w-full items-center justify-between rounded-xl border bg-white px-3.5 text-left text-sm transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#059669]/20 focus:border-[#059669] disabled:bg-[#f8fafc] disabled:cursor-not-allowed",
-          error ? "border-[#dc2626]" : open ? "border-[#059669]" : "border-[#cbd5e1]"
+          "flex h-10 w-full items-center justify-between rounded-xl border-2 border-[#0f172a] bg-white px-3.5 text-left text-sm font-semibold shadow-[2px_2px_0px_#0f172a] transition-all cursor-pointer focus:outline-none focus:shadow-[4px_4px_0px_#22d3ee] disabled:bg-[#f1f5f9] disabled:cursor-not-allowed",
+          open && "bg-[#ecfeff] shadow-[4px_4px_0px_#22d3ee]",
+          error && "border-[#e11d48] shadow-[3px_3px_0px_#e11d48]"
         )}
       >
-        <span className={cn("truncate", selectedOption ? "text-[#0f172a]" : "text-[#94a3b8]")}>
+        <span className={cn("truncate", selectedOption ? "text-[#0f172a]" : "text-[#64748b]")}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <ChevronDown
           className={cn(
-            "h-4 w-4 shrink-0 text-[#64748b] transition-transform duration-150",
-            open && "rotate-180 text-[#059669]"
+            "h-4 w-4 shrink-0 text-[#0f172a] transition-transform duration-150",
+            open && "rotate-180 text-[#a855f7]"
           )}
         />
       </button>
@@ -105,24 +106,24 @@ export function CustomSelect({
       {open && (
         <div
           role="listbox"
-          className="absolute z-50 mt-1.5 w-full rounded-xl border border-[#e2e8f0] bg-white p-1.5 shadow-lg"
+          className="absolute z-50 mt-2 w-full rounded-xl border-2 border-[#0f172a] bg-white p-1.5 shadow-[5px_5px_0px_#0f172a]"
         >
           {searchable && (
             <div className="relative mb-1.5 px-1 pt-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#64748b]" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#0f172a]" />
               <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Cari pilihan..."
-                className="h-8 w-full rounded-lg border border-[#e2e8f0] bg-[#f8fafc] pl-8 pr-2.5 text-xs text-[#0f172a] focus:outline-none focus:border-[#059669]"
+                className="h-8 w-full rounded-lg border-2 border-[#0f172a] bg-[#f4f8fb] pl-8 pr-2.5 text-xs font-medium text-[#0f172a] focus:outline-none focus:bg-white"
               />
             </div>
           )}
 
-          <div className="max-h-60 overflow-y-auto space-y-0.5">
+          <div className="max-h-60 overflow-y-auto space-y-1">
             {filteredOptions.length === 0 ? (
-              <div className="px-3 py-2 text-xs text-[#64748b] text-center">
+              <div className="px-3 py-2 text-xs font-semibold text-[#64748b] text-center">
                 Tidak ada opsi ditemukan
               </div>
             ) : (
@@ -140,21 +141,21 @@ export function CustomSelect({
                       setQuery("");
                     }}
                     className={cn(
-                      "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors cursor-pointer",
+                      "flex w-full items-center justify-between rounded-lg border-2 px-3 py-2 text-left text-sm transition-colors cursor-pointer",
                       isSelected
-                        ? "bg-[#ecfdf5] text-[#047857] font-semibold"
-                        : "text-[#0f172a] hover:bg-[#f8fafc]"
+                        ? "border-[#0f172a] bg-[#22d3ee] text-[#0f172a] font-extrabold"
+                        : "border-transparent text-[#0f172a] hover:border-[#0f172a] hover:bg-[#f3e8ff]"
                     )}
                   >
                     <div className="min-w-0 pr-2">
                       <div className="truncate">{option.label}</div>
                       {option.description && (
-                        <div className="truncate text-xs font-normal text-[#64748b]">
+                        <div className="truncate text-xs font-medium text-[#334155]">
                           {option.description}
                         </div>
                       )}
                     </div>
-                    {isSelected && <Check className="h-4 w-4 shrink-0 text-[#059669]" />}
+                    {isSelected && <Check className="h-4 w-4 shrink-0 text-[#0f172a]" />}
                   </button>
                 );
               })
@@ -163,7 +164,7 @@ export function CustomSelect({
         </div>
       )}
 
-      {error && <p className="text-xs font-medium text-[#dc2626]">{error}</p>}
+      {error && <p className="text-xs font-bold text-[#e11d48]">{error}</p>}
     </div>
   );
 }

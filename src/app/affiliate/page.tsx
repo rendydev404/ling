@@ -8,30 +8,11 @@ import type { Affiliate } from "@/types/database";
 export const dynamic = "force-dynamic";
 
 export default async function AffiliatePage() {
-  const { products, isDemoMode } = await getStorefrontBundle();
-
   if (!isSupabaseServerConfigured()) {
-    const demoAffiliate: Affiliate = {
-      id: "aff-demo-1",
-      user_id: "user-demo-1",
-      referral_code: "LINGPARTNER",
-      status: "active",
-      commission_rate_override: null,
-      total_clicks: 318,
-      total_conversions: 19,
-      total_earned: 1425000,
-      total_paid_out: 500000,
-      created_at: new Date().toISOString(),
-    };
-    return (
-      <AffiliateDashboardClient
-        affiliate={demoAffiliate}
-        products={products}
-        isDemoMode={isDemoMode}
-      />
-    );
+    redirect("/login?next=/affiliate");
   }
 
+  const { products } = await getStorefrontBundle();
   const { user } = await requireAuth("/login?next=/affiliate");
   const supabase = await createServerSupabaseClient();
   const { data: aff } = await supabase

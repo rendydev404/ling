@@ -15,7 +15,6 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, label, error, helperText, leftIcon, id, type = "text", ...props }, ref) => {
     const generatedId = React.useId();
     const inputId = id ?? generatedId;
-    // Prevent native browser search/date controls
     const safeType = type === "search" || type === "date" ? "text" : type;
 
     return (
@@ -23,14 +22,14 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-xs font-semibold text-[#334155] tracking-wide"
+            className="block text-xs font-extrabold uppercase tracking-wider text-[#0f172a]"
           >
             {label}
           </label>
         )}
         <div className="relative">
           {leftIcon && (
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#64748b]">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#0f172a]">
               {leftIcon}
             </span>
           )}
@@ -39,16 +38,16 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             type={safeType}
             className={cn(
-              "w-full h-10 rounded-xl border bg-white px-3.5 text-sm text-[#0f172a] placeholder:text-[#94a3b8] transition-colors focus:outline-none focus:ring-2 focus:ring-[#059669]/20 focus:border-[#059669] disabled:bg-[#f8fafc] disabled:text-[#64748b]",
+              "w-full h-10 rounded-xl border-2 border-[#0f172a] bg-white px-3.5 text-sm font-medium text-[#0f172a] placeholder:text-[#64748b] shadow-[2px_2px_0px_#0f172a] transition-all focus:outline-none focus:bg-[#ecfeff]/50 focus:shadow-[4px_4px_0px_#22d3ee] disabled:bg-[#f1f5f9] disabled:text-[#64748b]",
               leftIcon && "pl-9",
-              error ? "border-[#dc2626] focus:border-[#dc2626] focus:ring-[#dc2626]/20" : "border-[#cbd5e1]",
+              error && "border-[#e11d48] bg-[#ffe4e6]/40 focus:shadow-[4px_4px_0px_#e11d48]",
               className
             )}
             {...props}
           />
         </div>
-        {error && <p className="text-xs font-medium text-[#dc2626]">{error}</p>}
-        {!error && helperText && <p className="text-xs text-[#64748b]">{helperText}</p>}
+        {error && <p className="text-xs font-bold text-[#e11d48]">{error}</p>}
+        {!error && helperText && <p className="text-xs font-medium text-[#475569]">{helperText}</p>}
       </div>
     );
   }
@@ -72,7 +71,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         {label && (
           <label
             htmlFor={textareaId}
-            className="block text-xs font-semibold text-[#334155] tracking-wide"
+            className="block text-xs font-extrabold uppercase tracking-wider text-[#0f172a]"
           >
             {label}
           </label>
@@ -81,14 +80,14 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           ref={ref}
           id={textareaId}
           className={cn(
-            "w-full min-h-[96px] rounded-xl border bg-white px-3.5 py-2.5 text-sm text-[#0f172a] placeholder:text-[#94a3b8] transition-colors focus:outline-none focus:ring-2 focus:ring-[#059669]/20 focus:border-[#059669] disabled:bg-[#f8fafc] resize-y",
-            error ? "border-[#dc2626]" : "border-[#cbd5e1]",
+            "w-full min-h-[96px] rounded-xl border-2 border-[#0f172a] bg-white px-3.5 py-2.5 text-sm font-medium text-[#0f172a] placeholder:text-[#64748b] shadow-[2px_2px_0px_#0f172a] transition-all focus:outline-none focus:bg-[#ecfeff]/50 focus:shadow-[4px_4px_0px_#22d3ee] disabled:bg-[#f1f5f9] resize-y",
+            error && "border-[#e11d48] bg-[#ffe4e6]/40 focus:shadow-[4px_4px_0px_#e11d48]",
             className
           )}
           {...props}
         />
-        {error && <p className="text-xs font-medium text-[#dc2626]">{error}</p>}
-        {!error && helperText && <p className="text-xs text-[#64748b]">{helperText}</p>}
+        {error && <p className="text-xs font-bold text-[#e11d48]">{error}</p>}
+        {!error && helperText && <p className="text-xs font-medium text-[#475569]">{helperText}</p>}
       </div>
     );
   }
@@ -111,21 +110,21 @@ export function CustomSearchInput({
 }: CustomSearchInputProps) {
   return (
     <div className={cn("relative w-full", className)}>
-      <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748b]" />
+      <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#0f172a]" />
       <input
         type="text"
         role="searchbox"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full h-10 rounded-xl border border-[#cbd5e1] bg-white pl-10 pr-9 text-sm text-[#0f172a] placeholder:text-[#94a3b8] transition-colors focus:outline-none focus:border-[#059669] focus:ring-2 focus:ring-[#059669]/20"
+        className="w-full h-10 rounded-xl border-2 border-[#0f172a] bg-white pl-10 pr-9 text-sm font-medium text-[#0f172a] placeholder:text-[#64748b] shadow-[3px_3px_0px_#0f172a] transition-all focus:outline-none focus:bg-[#ecfeff]/50 focus:shadow-[4px_4px_0px_#22d3ee]"
       />
       {value && (
         <button
           type="button"
           onClick={() => onChange("")}
           aria-label="Hapus pencarian"
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-md text-[#64748b] hover:bg-[#f1f5f9] hover:text-[#0f172a] cursor-pointer"
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-md border border-[#0f172a] bg-[#f3e8ff] text-[#0f172a] hover:bg-[#a855f7] hover:text-white cursor-pointer"
         >
           <X className="h-3.5 w-3.5" />
         </button>

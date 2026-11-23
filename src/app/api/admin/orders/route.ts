@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createServerSupabaseClient, isSupabaseServerConfigured } from "@/lib/supabase/server";
+import { isSupabaseServerConfigured } from "@/lib/supabase/server";
+import { assertAdminApi } from "@/lib/supabase/auth";
 
 const updateSchema = z.object({
   orderId: z.string().uuid(),
@@ -12,20 +13,8 @@ export async function PATCH(request: Request) {
   if (!isSupabaseServerConfigured()) {
     return NextResponse.json({ error: "Supabase belum dikonfigurasi" }, { status: 503 });
   }
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-  if (profile?.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const auth = await assertAdminApi();
+  if ("error" in auth) return auth.error;
 
   const body = await request.json();
   const parsed = updateSchema.safeParse(body);
@@ -33,7 +22,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: parsed.error.message }, { status: 400 });
   }
 
-  const { error } = await supabase
+  const { error } = await auth.supabase
     .from("orders")
     .update({
       shipping_tracking_number: parsed.data.shipping_tracking_number ?? null,

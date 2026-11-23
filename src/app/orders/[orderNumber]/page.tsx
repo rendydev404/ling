@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { ArrowRight, CheckCircle2, Clock, ExternalLink, Receipt, XCircle } from "lucide-react";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import {
@@ -35,7 +36,6 @@ export default async function OrderStatusPage({
 }: {
   params: Promise<{ orderNumber: string }>;
   searchParams: Promise<{
-    demo?: string;
     amount?: string;
     product?: string;
     buyer?: string;
@@ -70,7 +70,6 @@ export default async function OrderStatusPage({
       .single();
     order = data;
 
-    // Reconcile pending order directly against Midtrans Core API (instant fallback if webhook hasn't arrived yet)
     if (order && order.payment_status === "pending" && midtransReady) {
       const liveStatus = await getMidtransTransactionStatus(
         order.midtrans_order_id || order.order_number
@@ -94,13 +93,11 @@ export default async function OrderStatusPage({
     }
   }
 
-  const isSimulatedDemo = query.demo === "1" || (!order && !midtransReady);
-
   let liveMidtransStatus: string | null = null;
   let livePaymentMethod: string | null = null;
   let liveGrossAmount: number | null = null;
 
-  if (!order && !isSimulatedDemo && midtransReady) {
+  if (!order && midtransReady) {
     const liveStatus = await getMidtransTransactionStatus(orderNumber);
     if (liveStatus) {
       liveMidtransStatus = mapMidtransStatus(
@@ -117,33 +114,31 @@ export default async function OrderStatusPage({
     }
   }
 
-  const displayStatus =
-    order?.payment_status ??
-    liveMidtransStatus ??
-    (isSimulatedDemo ? "paid" : "pending");
+  if (!order && !liveMidtransStatus && !query.snap && !query.amount) {
+    notFound();
+  }
 
+  const displayStatus = order?.payment_status ?? liveMidtransStatus ?? "pending";
   const displayTotal = order
     ? Number(order.total_amount)
     : liveGrossAmount ?? Number(query.amount || 0);
-
   const displayMethod = order?.payment_method ?? livePaymentMethod;
   const resumeSnapUrl = sanitizeMidtransRedirectUrl(
     order?.midtrans_redirect_url ?? query.snap
   );
-
   const isFailedStatus = displayStatus === "expired" || displayStatus === "cancelled";
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] px-4 py-12 flex items-center justify-center">
+    <div className="min-h-screen px-4 py-12 flex items-center justify-center">
       <div className="w-full max-w-lg space-y-5">
         <Card className="p-6 sm:p-8 text-center">
           <div
-            className={`mx-auto flex h-14 w-14 items-center justify-center rounded-2xl ${
+            className={`mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-[#0f172a] shadow-[3px_3px_0px_#0f172a] ${
               displayStatus === "paid"
-                ? "bg-[#ecfdf5] text-[#059669]"
+                ? "bg-[#22d3ee] text-[#0f172a]"
                 : isFailedStatus
-                  ? "bg-[#fef2f2] text-[#dc2626]"
-                  : "bg-[#fffbeb] text-[#d97706]"
+                  ? "bg-[#fda4af] text-[#0f172a]"
+                  : "bg-[#fde047] text-[#0f172a]"
             }`}
           >
             {displayStatus === "paid" ? (
@@ -162,51 +157,49 @@ export default async function OrderStatusPage({
                 ? "Pembayaran Kadaluarsa / Dibatalkan"
                 : "Menunggu Pembayaran Midtrans"}
           </h1>
-          <p className="mt-1.5 text-xs text-[#64748b]">
-            {isSimulatedDemo
-              ? "Transaksi simulasi sandbox selesai. Sambungkan kunci Midtrans Sandbox/Production di .env.local untuk pembayaran nyata."
-              : displayStatus === "paid"
-                ? "Pembayaran Midtrans telah terverifikasi secara otomatis."
-                : "Selesaikan pembayaran melalui Midtrans (QRIS, Virtual Account, atau E-Wallet), lalu muat ulang halaman ini untuk memeriksa status terbaru."}
+          <p className="mt-1.5 text-xs font-medium text-[#475569]">
+            {displayStatus === "paid"
+              ? "Pembayaran Midtrans telah terverifikasi secara otomatis."
+              : "Selesaikan pembayaran melalui Midtrans (QRIS, Virtual Account, atau E-Wallet), lalu muat ulang halaman ini untuk memeriksa status terbaru."}
           </p>
 
-          <div className="mt-6 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-4 text-left space-y-2.5 text-xs">
+          <div className="mt-6 rounded-xl border-2 border-[#0f172a] bg-[#f4f8fb] p-4 text-left space-y-2.5 text-xs shadow-[3px_3px_0px_#0f172a]">
             <div className="flex justify-between">
-              <span className="text-[#64748b] inline-flex items-center gap-1.5">
-                <Receipt className="h-3.5 w-3.5" /> Nomor Pesanan
+              <span className="text-[#475569] font-semibold inline-flex items-center gap-1.5">
+                <Receipt className="h-3.5 w-3.5 text-[#0f172a]" /> Nomor Pesanan
               </span>
-              <span className="font-mono font-bold text-[#0f172a]">{orderNumber}</span>
+              <span className="font-mono font-extrabold text-[#0f172a]">{orderNumber}</span>
             </div>
             {(order?.buyer_name || query.buyer) && (
               <div className="flex justify-between">
-                <span className="text-[#64748b]">Pembeli</span>
-                <span className="font-semibold text-[#0f172a]">
+                <span className="text-[#475569] font-semibold">Pembeli</span>
+                <span className="font-bold text-[#0f172a]">
                   {order?.buyer_name || query.buyer}
                 </span>
               </div>
             )}
             {query.product && (
               <div className="flex justify-between">
-                <span className="text-[#64748b]">Produk</span>
-                <span className="font-semibold text-[#0f172a] text-right max-w-[220px] truncate">
+                <span className="text-[#475569] font-semibold">Produk</span>
+                <span className="font-bold text-[#0f172a] text-right max-w-[220px] truncate">
                   {query.product}
                 </span>
               </div>
             )}
             {displayMethod && (
               <div className="flex justify-between">
-                <span className="text-[#64748b]">Metode Bayar</span>
-                <span className="font-semibold uppercase text-[#0f172a]">
+                <span className="text-[#475569] font-semibold">Metode Bayar</span>
+                <span className="font-extrabold uppercase text-[#7e22ce]">
                   {displayMethod.replace(/_/g, " ")}
                 </span>
               </div>
             )}
             <div className="flex justify-between">
-              <span className="text-[#64748b]">Total</span>
-              <span className="font-extrabold text-[#059669]">{formatIDR(displayTotal)}</span>
+              <span className="text-[#475569] font-semibold">Total</span>
+              <span className="font-extrabold text-[#0e7490]">{formatIDR(displayTotal)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-[#64748b]">Status</span>
+              <span className="text-[#475569] font-semibold">Status</span>
               <Badge
                 variant={
                   displayStatus === "paid"
@@ -221,19 +214,19 @@ export default async function OrderStatusPage({
             </div>
             {order?.created_at && (
               <div className="flex justify-between">
-                <span className="text-[#64748b]">Waktu</span>
-                <span className="text-[#0f172a]">{formatDateTimeID(order.created_at)}</span>
+                <span className="text-[#475569] font-semibold">Waktu</span>
+                <span className="font-medium text-[#0f172a]">{formatDateTimeID(order.created_at)}</span>
               </div>
             )}
           </div>
 
-          <div className="mt-6 flex flex-col sm:flex-row gap-2.5">
+          <div className="mt-6 flex flex-col sm:flex-row gap-3">
             {displayStatus === "pending" && resumeSnapUrl && (
               <a
                 href={resumeSnapUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#059669] px-4 text-sm font-bold text-white hover:bg-[#047857]"
+                className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-[#0f172a] bg-[#22d3ee] px-4 text-sm font-extrabold text-[#0f172a] shadow-[3px_3px_0px_#0f172a] transition-all hover:bg-[#06b6d4] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#0f172a]"
               >
                 Lanjutkan Bayar Midtrans
                 <ExternalLink className="h-4 w-4" />
@@ -241,7 +234,7 @@ export default async function OrderStatusPage({
             )}
             <Link
               href="/portal"
-              className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#0f172a] px-4 text-sm font-bold text-white hover:bg-[#1e293b]"
+              className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-[#0f172a] bg-[#a855f7] px-4 text-sm font-extrabold text-white shadow-[3px_3px_0px_#0f172a] transition-all hover:bg-[#9333ea] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#0f172a]"
             >
               Buka Buyer Portal
               <ArrowRight className="h-4 w-4" />
@@ -250,7 +243,7 @@ export default async function OrderStatusPage({
 
           <Link
             href="/"
-            className="mt-4 inline-block text-xs font-semibold text-[#475569] hover:text-[#0f172a]"
+            className="mt-5 inline-block text-xs font-extrabold text-[#0f172a] underline decoration-2 underline-offset-4 hover:text-[#7e22ce]"
           >
             Kembali ke Storefront
           </Link>

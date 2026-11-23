@@ -41,7 +41,14 @@ export type BookingStatus =
   | "cancelled";
 
 export interface ThemeConfig {
-  preset: "clean-light" | "warm-paper" | "slate-dark" | "forest-crisp" | "midnight-ink";
+  preset:
+    | "neo-cyan"
+    | "neo-purple"
+    | "clean-light"
+    | "warm-paper"
+    | "slate-dark"
+    | "forest-crisp"
+    | "midnight-ink";
   backgroundColor: string;
   surfaceColor: string;
   borderColor: string;
@@ -49,6 +56,7 @@ export interface ThemeConfig {
   mutedTextColor: string;
   accentColor: string;
   accentTextColor: string;
+  secondaryAccentColor?: string;
   buttonRadius: "md" | "xl" | "full" | "none";
 }
 

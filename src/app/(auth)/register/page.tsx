@@ -26,9 +26,9 @@ export default function RegisterPage() {
     e.preventDefault();
     if (!isSupabaseConfigured()) {
       toast({
-        type: "info",
-        title: "Mode Pratinjau Aktif",
-        description: "Tambahkan kredensial Supabase di .env.local untuk mendaftarkan akun.",
+        type: "error",
+        title: "Database belum terhubung",
+        description: "Periksa konfigurasi Supabase Anda.",
       });
       return;
     }
@@ -56,7 +56,7 @@ export default function RegisterPage() {
       toast({
         type: "success",
         title: "Akun berhasil dibuat",
-        description: "Akun pertama otomatis menjadi Admin Owner. Silakan lanjut ke dashboard.",
+        description: "Silakan lanjut ke dashboard Anda.",
       });
       router.push(role === "affiliate" ? "/affiliate" : "/portal");
       router.refresh();
@@ -66,24 +66,24 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#f8fafc] px-4 py-10">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10">
       <div className="w-full max-w-md space-y-5">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#475569] hover:text-[#0f172a]"
+          className="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#0f172a] bg-white px-3 py-1.5 text-xs font-extrabold text-[#0f172a] shadow-[2px_2px_0px_#0f172a] hover:bg-[#ecfeff]"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Kembali ke Storefront
         </Link>
 
         <Card className="p-6 sm:p-7">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#059669] text-white">
+          <div className="flex items-center gap-3.5 mb-6">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl border-2 border-[#0f172a] bg-[#a855f7] text-white shadow-[3px_3px_0px_#0f172a]">
               <Store className="h-5 w-5" />
             </div>
             <div>
               <h1 className="text-lg font-extrabold text-[#0f172a]">Buat Akun Baru</h1>
-              <p className="text-xs text-[#64748b]">
+              <p className="text-xs font-medium text-[#475569]">
                 Akses produk yang dibeli atau bergabung sebagai Affiliate Partner
               </p>
             </div>
@@ -95,7 +95,7 @@ export default function RegisterPage() {
               required
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="Budi Santoso"
+              placeholder="Nama lengkap Anda"
               leftIcon={<User className="h-4 w-4" />}
             />
             <Input
@@ -147,9 +147,12 @@ export default function RegisterPage() {
             </Button>
           </form>
 
-          <p className="mt-5 text-center text-xs text-[#64748b]">
+          <p className="mt-5 text-center text-xs font-medium text-[#475569]">
             Sudah punya akun?{" "}
-            <Link href="/login" className="font-semibold text-[#059669] hover:underline">
+            <Link
+              href="/login"
+              className="font-extrabold text-[#7e22ce] underline decoration-2 underline-offset-2 hover:text-[#0891b2]"
+            >
               Masuk di sini
             </Link>
           </p>

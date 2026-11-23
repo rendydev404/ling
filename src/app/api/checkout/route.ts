@@ -6,44 +6,10 @@ import {
   createServiceRoleClient,
   isSupabaseServerConfigured,
 } from "@/lib/supabase/server";
-import { DEMO_PRODUCTS, DEMO_VARIANTS, DEFAULT_STORE_SETTINGS } from "@/lib/demo-data";
 import { calculateCheckoutPricing } from "@/lib/checkout-engine";
-import { createMidtransSnapTransaction, isMidtransConfigured } from "@/lib/midtrans";
+import { createMidtransSnapTransaction } from "@/lib/midtrans";
 import { generateOrderNumber, normalizePhoneID } from "@/lib/utils";
 import type { Product, ProductVariant, ShippingOption, Voucher } from "@/types/database";
-
-const DEMO_VOUCHERS: Record<string, Voucher> = {
-  LING20: {
-    id: "vch-demo-1",
-    code: "LING20",
-    discount_type: "percentage",
-    discount_value: 20,
-    max_discount_amount: 100000,
-    min_order_amount: 50000,
-    max_uses: 200,
-    used_count: 14,
-    applicable_product_id: null,
-    starts_at: null,
-    expires_at: null,
-    is_active: true,
-    created_at: "2026-01-01T00:00:00.000Z",
-  },
-  POTONG25K: {
-    id: "vch-demo-2",
-    code: "POTONG25K",
-    discount_type: "fixed",
-    discount_value: 25000,
-    max_discount_amount: null,
-    min_order_amount: 100000,
-    max_uses: 50,
-    used_count: 8,
-    applicable_product_id: null,
-    starts_at: null,
-    expires_at: null,
-    is_active: true,
-    created_at: "2026-01-01T00:00:00.000Z",
-  },
-};
 
 const checkoutSchema = z.object({
   productSlug: z.string().min(1),
@@ -83,123 +49,11 @@ export async function POST(request: Request) {
     );
   }
 
-  const input = parsed.data;
-  const orderNumber = generateOrderNumber();
-  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/+$/, "");
-
-  // Local Storefront mode (when Supabase is not configured yet)
   if (!isSupabaseServerConfigured()) {
-    const product = DEMO_PRODUCTS.find((p) => p.slug === input.productSlug);
-    if (!product) {
-      return NextResponse.json({ error: "Produk tidak ditemukan." }, { status: 404 });
-    }
-    const variant = input.variantId
-      ? (DEMO_VARIANTS[product.id] ?? []).find((v) => v.id === input.variantId) ?? null
-      : null;
-    const bumpProduct = product.order_bump_product_id
-      ? DEMO_PRODUCTS.find((p) => p.id === product.order_bump_product_id) ?? null
-      : null;
-    const demoVoucher = input.voucherCode
-      ? DEMO_VOUCHERS[input.voucherCode.trim().toUpperCase()] ?? null
-      : null;
-
-    const courier = DEFAULT_STORE_SETTINGS.shipping_options.find(
-      (s) => s.code === input.shippingCourierCode
+    return NextResponse.json(
+      { error: "Database belum dikonfigurasi." },
+      { status: 503 }
     );
-
-    const pricing = calculateCheckoutPricing({
-      product,
-      variant,
-      quantity: input.quantity,
-      customAmount: input.customAmount,
-      includeOrderBump: input.includeOrderBump,
-      orderBumpProduct: bumpProduct,
-      voucher: demoVoucher,
-      shippingCost: courier?.cost ?? 0,
-    });
-
-    const orderSummaryParams = new URLSearchParams({
-      amount: String(pricing.totalAmount),
-      product: product.title,
-      buyer: input.buyerName.trim(),
-    });
-
-    if (pricing.totalAmount > 0 && isMidtransConfigured()) {
-      const snapItems = [
-        {
-          id: product.id,
-          name: variant ? `${product.title} (${variant.name})` : product.title,
-          price: pricing.unitPrice,
-          quantity: input.quantity,
-        },
-      ];
-      if (input.includeOrderBump && bumpProduct && pricing.orderBumpAmount > 0) {
-        snapItems.push({
-          id: bumpProduct.id,
-          name: bumpProduct.title,
-          price: pricing.orderBumpAmount,
-          quantity: 1,
-        });
-      }
-      if (pricing.shippingCost > 0) {
-        snapItems.push({
-          id: "SHIPPING",
-          name: `Ongkos Kirim (${courier?.name ?? "Kurir"})`,
-          price: pricing.shippingCost,
-          quantity: 1,
-        });
-      }
-      if (pricing.discountAmount > 0) {
-        snapItems.push({
-          id: "DISCOUNT",
-          name: `Diskon Voucher (${demoVoucher?.code ?? "PROMO"})`,
-          price: -pricing.discountAmount,
-          quantity: 1,
-        });
-      }
-
-      const orderStatusUrl = `${appUrl}/orders/${orderNumber}?${orderSummaryParams.toString()}`;
-      try {
-        const snap = await createMidtransSnapTransaction({
-          orderId: orderNumber,
-          grossAmount: pricing.totalAmount,
-          customerName: input.buyerName.trim(),
-          customerEmail: input.buyerEmail.trim(),
-          customerPhone: normalizePhoneID(input.buyerPhone),
-          items: snapItems,
-          finishRedirectUrl: orderStatusUrl,
-        });
-
-        return NextResponse.json({
-          orderNumber,
-          totalAmount: pricing.totalAmount,
-          snapToken: snap.token,
-          redirectUrl: snap.redirect_url,
-          orderStatusUrl: `${orderStatusUrl}&snap=${encodeURIComponent(snap.redirect_url)}`,
-          isSimulated: snap.isSimulated,
-        });
-      } catch (err) {
-        return NextResponse.json(
-          {
-            error:
-              err instanceof Error
-                ? err.message
-                : "Gagal membuat transaksi Midtrans Snap.",
-          },
-          { status: 502 }
-        );
-      }
-    }
-
-    orderSummaryParams.set("demo", "1");
-    return NextResponse.json({
-      orderNumber,
-      totalAmount: pricing.totalAmount,
-      snapToken: `sandbox-demo-token-${orderNumber}`,
-      redirectUrl: `${appUrl}/orders/${orderNumber}?${orderSummaryParams.toString()}`,
-      orderStatusUrl: `${appUrl}/orders/${orderNumber}?${orderSummaryParams.toString()}`,
-      isSimulated: true,
-    });
   }
 
   const serviceClient = createServiceRoleClient();
@@ -210,13 +64,15 @@ export async function POST(request: Request) {
     );
   }
 
-  // Get logged-in buyer if any
+  const input = parsed.data;
+  const orderNumber = generateOrderNumber();
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/+$/, "");
+
   const userClient = await createServerSupabaseClient();
   const {
     data: { user },
   } = await userClient.auth.getUser();
 
-  // Fetch product & store settings
   const [productRes, settingsRes] = await Promise.all([
     serviceClient
       .from("products")
@@ -233,12 +89,18 @@ export async function POST(request: Request) {
       .single(),
   ]);
 
+  if (productRes.error?.code === "PGRST205") {
+    return NextResponse.json(
+      { error: "Skema tabel database belum dimigrasi di Supabase." },
+      { status: 503 }
+    );
+  }
+
   const product = productRes.data as Product | null;
   if (!product) {
     return NextResponse.json({ error: "Produk tidak ditemukan." }, { status: 404 });
   }
 
-  // Appointment validation
   if (product.type === "appointment" && (!input.bookingDate || !input.bookingStartTime)) {
     return NextResponse.json(
       { error: "Silakan pilih tanggal dan jam konsultasi terlebih dahulu." },
@@ -246,7 +108,6 @@ export async function POST(request: Request) {
     );
   }
 
-  // Physical shipping validation
   if (product.type === "physical" && !input.shippingAddress) {
     return NextResponse.json(
       { error: "Alamat pengiriman wajib diisi untuk produk fisik." },
@@ -300,7 +161,6 @@ export async function POST(request: Request) {
     shippingCost: selectedCourier?.cost ?? 0,
   });
 
-  // Resolve affiliate referral cookie
   const cookieStore = await cookies();
   const refCode = cookieStore.get("ling_ref")?.value;
   let affiliateId: string | null = null;
@@ -314,7 +174,6 @@ export async function POST(request: Request) {
     affiliateId = aff?.id ?? null;
   }
 
-  // Insert Order
   const { data: order, error: orderErr } = await serviceClient
     .from("orders")
     .insert({
@@ -348,7 +207,6 @@ export async function POST(request: Request) {
     );
   }
 
-  // Insert Order Items
   const itemsToInsert = [
     {
       order_id: order.id,
@@ -387,7 +245,6 @@ export async function POST(request: Request) {
 
   await serviceClient.from("order_items").insert(itemsToInsert);
 
-  // Reserve Appointment Slot atomically (unique partial index protects against double-booking)
   if (product.type === "appointment" && input.bookingDate && input.bookingStartTime) {
     const { error: bookErr } = await serviceClient.from("appointment_bookings").insert({
       order_id: order.id,
@@ -413,7 +270,6 @@ export async function POST(request: Request) {
     }
   }
 
-  // Create Midtrans Snap Transaction
   if (pricing.totalAmount > 0) {
     const snapItems = itemsToInsert.map((item) => ({
       id: item.product_id,

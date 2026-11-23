@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { redirect } from "next/navigation";
 import {
   createServerSupabaseClient,
@@ -6,8 +7,14 @@ import {
 } from "./server";
 import type { Profile } from "@/types/database";
 
+export const PRIMARY_ADMIN_EMAIL = "rendyakun50@gmail.com";
+
 const PROFILE_COLUMNS =
   "id, email, full_name, phone, avatar_url, role, bank_name, bank_account_number, bank_account_holder, created_at";
+
+export function isPrimaryAdminEmail(email: string | null | undefined): boolean {
+  return (email ?? "").trim().toLowerCase() === PRIMARY_ADMIN_EMAIL;
+}
 
 export async function getCurrentUserProfile(): Promise<{
   user: { id: string; email: string } | null;
@@ -26,6 +33,9 @@ export async function getCurrentUserProfile(): Promise<{
     return { user: null, profile: null };
   }
 
+  const email = user.email ?? "";
+  const isOwnerEmail = isPrimaryAdminEmail(email);
+
   const { data: profile, error: profileErr } = await supabase
     .from("profiles")
     .select(PROFILE_COLUMNS)
@@ -33,9 +43,24 @@ export async function getCurrentUserProfile(): Promise<{
     .single();
 
   if (profile) {
+    const typedProfile = profile as Profile;
+    if (isOwnerEmail && typedProfile.role !== "admin") {
+      const serviceClient = createServiceRoleClient();
+      if (serviceClient) {
+        await serviceClient
+          .from("profiles")
+          .update({ role: "admin" })
+          .eq("id", user.id);
+      }
+      return {
+        user: { id: user.id, email },
+        profile: { ...typedProfile, role: "admin" },
+      };
+    }
+
     return {
-      user: { id: user.id, email: user.email ?? "" },
-      profile: profile as Profile,
+      user: { id: user.id, email },
+      profile: typedProfile,
     };
   }
 
@@ -43,17 +68,11 @@ export async function getCurrentUserProfile(): Promise<{
   if (profileErr?.code !== "PGRST205") {
     const serviceClient = createServiceRoleClient();
     if (serviceClient) {
-      const { count: adminCount } = await serviceClient
-        .from("profiles")
-        .select("id", { count: "exact", head: true })
-        .eq("role", "admin");
-
-      const assignedRole = (adminCount ?? 0) === 0 ? "admin" : "buyer";
-      const email = user.email ?? "";
+      const assignedRole = isOwnerEmail ? "admin" : "buyer";
       const fullName =
         (user.user_metadata?.full_name as string | undefined) ||
         email.split("@")[0] ||
-        "Kreator";
+        "Pengguna";
 
       const { data: created } = await serviceClient
         .from("profiles")
@@ -79,8 +98,28 @@ export async function getCurrentUserProfile(): Promise<{
     }
   }
 
+  // Fallback profile before schema migration if signed in as primary admin email
+  if (isOwnerEmail) {
+    return {
+      user: { id: user.id, email },
+      profile: {
+        id: user.id,
+        email,
+        full_name:
+          (user.user_metadata?.full_name as string | undefined) || "Rendy (Admin)",
+        phone: null,
+        avatar_url: null,
+        role: "admin",
+        bank_name: null,
+        bank_account_number: null,
+        bank_account_holder: null,
+        created_at: new Date().toISOString(),
+      },
+    };
+  }
+
   return {
-    user: { id: user.id, email: user.email ?? "" },
+    user: { id: user.id, email },
     profile: null,
   };
 }
@@ -93,13 +132,49 @@ export async function requireAuth(redirectTo = "/login") {
   return { user, profile };
 }
 
+/**
+ * Protects /admin routes silently: unauthenticated or non-admin visitors
+ * are redirected straight to "/" so the hidden admin login gate is never exposed.
+ */
 export async function requireAdmin() {
   const { user, profile } = await getCurrentUserProfile();
   if (!user) {
-    redirect("/login?next=/admin");
+    redirect("/");
   }
-  if (profile?.role !== "admin") {
-    redirect("/portal");
+  if (profile?.role !== "admin" && !isPrimaryAdminEmail(user.email)) {
+    redirect("/");
   }
   return { user, profile };
+}
+
+/**
+ * Shared guard for /api/admin/* endpoints.
+ */
+export async function assertAdminApi() {
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+  }
+
+  if (isPrimaryAdminEmail(user.email)) {
+    const db = createServiceRoleClient() ?? supabase;
+    return { supabase: db, user };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role !== "admin") {
+    return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+  }
+
+  const db = createServiceRoleClient() ?? supabase;
+  return { supabase: db, user };
 }

@@ -37,37 +37,37 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
-      <div className="fixed bottom-4 right-4 z-[60] flex w-full max-w-sm flex-col gap-2 pointer-events-none">
+      <div className="fixed bottom-4 right-4 z-[60] flex w-full max-w-sm flex-col gap-2.5 pointer-events-none">
         {items.map((item) => (
           <div
             key={item.id}
             className={cn(
-              "pointer-events-auto flex items-start gap-3 rounded-xl border bg-white p-3.5 shadow-lg",
-              item.type === "success" && "border-[#a7f3d0]",
-              item.type === "error" && "border-[#fecaca]",
-              item.type === "info" && "border-[#bfdbfe]"
+              "pointer-events-auto flex items-start gap-3 rounded-xl border-2 border-[#0f172a] p-3.5 shadow-[4px_4px_0px_#0f172a]",
+              item.type === "success" && "bg-[#cffafe]",
+              item.type === "error" && "bg-[#ffe4e6]",
+              item.type === "info" && "bg-[#f3e8ff]"
             )}
           >
             {item.type === "success" && (
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#059669]" />
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#0f172a]" />
             )}
             {item.type === "error" && (
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#dc2626]" />
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#e11d48]" />
             )}
             {item.type === "info" && (
-              <Info className="mt-0.5 h-4 w-4 shrink-0 text-[#2563eb]" />
+              <Info className="mt-0.5 h-4 w-4 shrink-0 text-[#7e22ce]" />
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-[#0f172a]">{item.title}</p>
+              <p className="text-sm font-extrabold text-[#0f172a]">{item.title}</p>
               {item.description && (
-                <p className="mt-0.5 text-xs text-[#475569]">{item.description}</p>
+                <p className="mt-0.5 text-xs font-medium text-[#334155]">{item.description}</p>
               )}
             </div>
             <button
               type="button"
               onClick={() => dismiss(item.id)}
               aria-label="Tutup notifikasi"
-              className="text-[#64748b] hover:text-[#0f172a] cursor-pointer"
+              className="text-[#0f172a] hover:opacity-70 cursor-pointer"
             >
               <X className="h-4 w-4" />
             </button>

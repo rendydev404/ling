@@ -23,56 +23,11 @@ export async function POST(request: Request) {
   const normalizedCode = parsed.data.code.trim().toUpperCase();
   const supabase = createServiceRoleClient();
 
-  // Demo mode built-in promo codes
   if (!supabase) {
-    const demoVouchers: Record<string, Voucher> = {
-      LING20: {
-        id: "vch-demo-1",
-        code: "LING20",
-        discount_type: "percentage",
-        discount_value: 20,
-        max_discount_amount: 100000,
-        min_order_amount: 50000,
-        max_uses: 200,
-        used_count: 14,
-        applicable_product_id: null,
-        starts_at: null,
-        expires_at: null,
-        is_active: true,
-        created_at: new Date().toISOString(),
-      },
-      POTONG25K: {
-        id: "vch-demo-2",
-        code: "POTONG25K",
-        discount_type: "fixed",
-        discount_value: 25000,
-        max_discount_amount: null,
-        min_order_amount: 100000,
-        max_uses: 50,
-        used_count: 8,
-        applicable_product_id: null,
-        starts_at: null,
-        expires_at: null,
-        is_active: true,
-        created_at: new Date().toISOString(),
-      },
-    };
-    const v = demoVouchers[normalizedCode];
-    if (!v) {
-      return NextResponse.json(
-        { error: "Kode voucher tidak ditemukan. Coba LING20 atau POTONG25K di mode pratinjau." },
-        { status: 404 }
-      );
-    }
-    const check = validateVoucherEligibility(v, parsed.data.subtotal, parsed.data.productId);
-    if (!check.valid) {
-      return NextResponse.json({ error: check.reason }, { status: 400 });
-    }
-    return NextResponse.json({
-      valid: true,
-      code: v.code,
-      discountAmount: calculateVoucherDiscount(v, parsed.data.subtotal),
-    });
+    return NextResponse.json(
+      { error: "Database belum terhubung." },
+      { status: 503 }
+    );
   }
 
   const { data: voucher } = await supabase

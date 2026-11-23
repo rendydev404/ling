@@ -17,18 +17,7 @@ export async function GET(
   const supabase = createServiceRoleClient();
 
   if (!supabase) {
-    // Demo mode slots (Mon-Fri 09:00-17:00)
-    if (dayOfWeek === 0 || dayOfWeek === 6) {
-      return NextResponse.json({ slots: [] });
-    }
-    const slots = generateAppointmentSlots({
-      startTime: "09:00",
-      endTime: "17:00",
-      durationMinutes: 60,
-      bufferMinutes: 15,
-      bookedStartTimes: ["11:30"],
-    });
-    return NextResponse.json({ slots });
+    return NextResponse.json({ slots: [] });
   }
 
   const [productRes, availRes, bookingsRes] = await Promise.all([
@@ -56,7 +45,9 @@ export async function GET(
     return NextResponse.json({ slots: [] });
   }
 
-  const meta = (productRes.data?.metadata as { duration_minutes?: number; buffer_minutes?: number } | null) ?? {};
+  const meta =
+    (productRes.data?.metadata as { duration_minutes?: number; buffer_minutes?: number } | null) ??
+    {};
   const bookedStartTimes = (bookingsRes.data ?? []).map((b) => b.start_time as string);
 
   const slots = generateAppointmentSlots({

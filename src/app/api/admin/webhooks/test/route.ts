@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { signWebhookPayload } from "@/lib/webhooks";
+import { isSupabaseServerConfigured } from "@/lib/supabase/server";
+import { assertAdminApi } from "@/lib/supabase/auth";
 
 const schema = z.object({
   targetUrl: z.string().url(),
@@ -8,6 +10,11 @@ const schema = z.object({
 });
 
 export async function POST(request: Request) {
+  if (isSupabaseServerConfigured()) {
+    const auth = await assertAdminApi();
+    if ("error" in auth) return auth.error;
+  }
+
   const body = await request.json();
   const parsed = schema.safeParse(body);
   if (!parsed.success) {

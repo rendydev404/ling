@@ -148,87 +148,144 @@ export function OrdersManager({
       </Card>
 
       <Card className="overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-[#e2e8f0] bg-[#f8fafc] text-xs font-semibold text-[#64748b]">
-              <tr>
-                <th className="px-5 py-3">Order ID</th>
-                <th className="px-5 py-3">Pembeli</th>
-                <th className="px-5 py-3">Total</th>
-                <th className="px-5 py-3">Pembayaran</th>
-                <th className="px-5 py-3">Pengiriman</th>
-                <th className="px-5 py-3">Waktu</th>
-                <th className="px-5 py-3 text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#e2e8f0]">
-              {paginated.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-5 py-10 text-center text-xs text-[#64748b]">
-                    Tidak ada pesanan ditemukan.
-                  </td>
-                </tr>
-              ) : (
-                paginated.map((o) => (
-                  <tr key={o.id} className="hover:bg-[#f8fafc]">
-                    <td className="px-5 py-3.5 font-mono text-xs font-bold text-[#0f172a]">
+        {paginated.length === 0 ? (
+          <div className="px-5 py-12 text-center text-xs font-semibold text-[#475569]">
+            Tidak ada pesanan ditemukan.
+          </div>
+        ) : (
+          <>
+            {/* Mobile Order Cards */}
+            <div className="divide-y-2 divide-[#0f172a] md:hidden">
+              {paginated.map((o) => (
+                <div key={o.id} className="p-4 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono text-xs font-black text-[#0f172a]">
                       {o.order_number}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <p className="text-xs font-semibold text-[#0f172a]">{o.buyer_name}</p>
-                      <p className="text-[11px] text-[#64748b]">{o.buyer_email} · {o.buyer_phone}</p>
-                    </td>
-                    <td className="px-5 py-3.5 text-xs font-bold text-[#0f172a]">
+                    </span>
+                    <Badge
+                      variant={
+                        o.payment_status === "paid"
+                          ? "success"
+                          : o.payment_status === "pending"
+                          ? "warning"
+                          : "danger"
+                      }
+                    >
+                      {o.payment_status.toUpperCase()}
+                    </Badge>
+                  </div>
+
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-xs font-black text-[#0f172a]">{o.buyer_name}</p>
+                      <p className="text-[11px] font-medium text-[#475569] truncate">
+                        {o.buyer_email} · {o.buyer_phone}
+                      </p>
+                    </div>
+                    <p className="text-sm font-black text-[#0f172a] shrink-0">
                       {formatIDR(Number(o.total_amount))}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <Badge
-                        variant={
-                          o.payment_status === "paid"
-                            ? "success"
-                            : o.payment_status === "pending"
-                            ? "warning"
-                            : "danger"
-                        }
-                      >
-                        {o.payment_status.toUpperCase()}
-                      </Badge>
-                    </td>
-                    <td className="px-5 py-3.5 text-xs text-[#475569]">
-                      {o.shipping_status === "not_applicable" ? (
-                        <span className="text-[#94a3b8]">Digital / Non-fisik</span>
-                      ) : (
-                        <div>
-                          <Badge variant="info">{o.shipping_status}</Badge>
-                          {o.shipping_tracking_number && (
-                            <p className="mt-0.5 font-mono text-[11px]">
-                              {o.shipping_tracking_number}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-5 py-3.5 text-xs text-[#64748b]">
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    <span className="text-[11px] font-medium text-[#64748b]">
                       {formatDateTimeID(o.created_at)}
-                    </td>
-                    <td className="px-5 py-3.5 text-right">
-                      {o.shipping_status !== "not_applicable" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openShippingModal(o)}
-                        >
-                          <Truck className="h-3.5 w-3.5" />
-                          Resi
-                        </Button>
-                      )}
-                    </td>
+                    </span>
+                    {o.shipping_status !== "not_applicable" ? (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => openShippingModal(o)}
+                      >
+                        <Truck className="h-3.5 w-3.5" />
+                        Resi ({o.shipping_status})
+                      </Button>
+                    ) : (
+                      <span className="text-[11px] font-bold text-[#64748b]">Digital</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="border-b-2 border-[#0f172a] bg-[#ecfeff] text-xs font-extrabold uppercase tracking-wider text-[#0f172a]">
+                  <tr>
+                    <th className="px-5 py-3">Order ID</th>
+                    <th className="px-5 py-3">Pembeli</th>
+                    <th className="px-5 py-3">Total</th>
+                    <th className="px-5 py-3">Pembayaran</th>
+                    <th className="px-5 py-3">Pengiriman</th>
+                    <th className="px-5 py-3">Waktu</th>
+                    <th className="px-5 py-3 text-right">Aksi</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody className="divide-y-2 divide-[#0f172a]/15">
+                  {paginated.map((o) => (
+                    <tr key={o.id} className="hover:bg-[#f3e8ff]/40">
+                      <td className="px-5 py-3.5 font-mono text-xs font-extrabold text-[#0f172a]">
+                        {o.order_number}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <p className="text-xs font-bold text-[#0f172a]">{o.buyer_name}</p>
+                        <p className="text-[11px] font-medium text-[#475569]">
+                          {o.buyer_email} · {o.buyer_phone}
+                        </p>
+                      </td>
+                      <td className="px-5 py-3.5 text-xs font-extrabold text-[#0f172a]">
+                        {formatIDR(Number(o.total_amount))}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <Badge
+                          variant={
+                            o.payment_status === "paid"
+                              ? "success"
+                              : o.payment_status === "pending"
+                              ? "warning"
+                              : "danger"
+                          }
+                        >
+                          {o.payment_status.toUpperCase()}
+                        </Badge>
+                      </td>
+                      <td className="px-5 py-3.5 text-xs font-medium text-[#334155]">
+                        {o.shipping_status === "not_applicable" ? (
+                          <span className="text-[#64748b]">Digital / Non-fisik</span>
+                        ) : (
+                          <div>
+                            <Badge variant="info">{o.shipping_status}</Badge>
+                            {o.shipping_tracking_number && (
+                              <p className="mt-1 font-mono text-[11px] font-bold">
+                                {o.shipping_tracking_number}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-5 py-3.5 text-xs font-medium text-[#475569]">
+                        {formatDateTimeID(o.created_at)}
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        {o.shipping_status !== "not_applicable" && (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => openShippingModal(o)}
+                          >
+                            <Truck className="h-3.5 w-3.5" />
+                            Resi
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
         <div className="px-5 pb-4">
           <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>

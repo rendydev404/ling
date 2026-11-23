@@ -29,10 +29,10 @@ function toIsoDate(year: number, monthIndex: number, day: number): string {
 
 export interface CustomDatePickerProps {
   label?: string;
-  value: string; // YYYY-MM-DD
+  value: string;
   onChange: (isoDate: string) => void;
-  minDate?: string; // YYYY-MM-DD
-  allowedWeekdays?: number[]; // 0..6
+  minDate?: string;
+  allowedWeekdays?: number[];
   inline?: boolean;
 }
 
@@ -83,30 +83,30 @@ export function CustomDatePicker({
   };
 
   const calendarCard = (
-    <div className="rounded-xl border border-[#e2e8f0] bg-white p-3.5 shadow-sm">
+    <div className="rounded-xl border-2 border-[#0f172a] bg-white p-3.5 shadow-[4px_4px_0px_#0f172a]">
       <div className="mb-3 flex items-center justify-between">
         <button
           type="button"
           onClick={prevMonth}
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#e2e8f0] text-[#334155] hover:bg-[#f8fafc] cursor-pointer"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-[#0f172a] bg-white text-[#0f172a] shadow-[2px_2px_0px_#0f172a] hover:bg-[#ecfeff] cursor-pointer"
           aria-label="Bulan sebelumnya"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
-        <span className="text-sm font-bold text-[#0f172a]">
+        <span className="text-sm font-extrabold text-[#0f172a]">
           {MONTH_NAMES[viewMonth]} {viewYear}
         </span>
         <button
           type="button"
           onClick={nextMonth}
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#e2e8f0] text-[#334155] hover:bg-[#f8fafc] cursor-pointer"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-[#0f172a] bg-white text-[#0f172a] shadow-[2px_2px_0px_#0f172a] hover:bg-[#ecfeff] cursor-pointer"
           aria-label="Bulan berikutnya"
         >
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold text-[#64748b] mb-1.5">
+      <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-extrabold uppercase text-[#475569] mb-1.5">
         {DAY_HEADERS.map((d) => (
           <div key={d} className="py-1">
             {d}
@@ -139,12 +139,12 @@ export function CustomDatePicker({
                 if (!inline) setOpen(false);
               }}
               className={cn(
-                "h-9 w-full rounded-lg text-xs font-medium transition-colors",
+                "h-9 w-full rounded-lg border-2 text-xs font-bold transition-all",
                 isSelected
-                  ? "bg-[#059669] text-white font-bold"
+                  ? "border-[#0f172a] bg-[#22d3ee] text-[#0f172a] font-extrabold shadow-[2px_2px_0px_#0f172a]"
                   : isDisabled
-                  ? "text-[#cbd5e1] cursor-not-allowed"
-                  : "text-[#0f172a] hover:bg-[#ecfdf5] hover:text-[#047857] cursor-pointer"
+                  ? "border-transparent text-[#cbd5e1] cursor-not-allowed"
+                  : "border-transparent text-[#0f172a] hover:border-[#0f172a] hover:bg-[#f3e8ff] cursor-pointer"
               )}
             >
               {day}
@@ -158,7 +158,11 @@ export function CustomDatePicker({
   if (inline) {
     return (
       <div className="space-y-1.5">
-        {label && <span className="block text-xs font-semibold text-[#334155]">{label}</span>}
+        {label && (
+          <span className="block text-xs font-extrabold uppercase tracking-wider text-[#0f172a]">
+            {label}
+          </span>
+        )}
         {calendarCard}
       </div>
     );
@@ -166,18 +170,22 @@ export function CustomDatePicker({
 
   return (
     <div ref={ref} className="relative w-full space-y-1.5">
-      {label && <span className="block text-xs font-semibold text-[#334155]">{label}</span>}
+      {label && (
+        <span className="block text-xs font-extrabold uppercase tracking-wider text-[#0f172a]">
+          {label}
+        </span>
+      )}
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex h-10 w-full items-center justify-between rounded-xl border border-[#cbd5e1] bg-white px-3.5 text-sm text-[#0f172a] hover:border-[#94a3b8] cursor-pointer"
+        className="flex h-10 w-full items-center justify-between rounded-xl border-2 border-[#0f172a] bg-white px-3.5 text-sm font-semibold text-[#0f172a] shadow-[2px_2px_0px_#0f172a] hover:bg-[#ecfeff] cursor-pointer"
       >
-        <span className={value ? "text-[#0f172a]" : "text-[#94a3b8]"}>
+        <span className={value ? "text-[#0f172a]" : "text-[#64748b]"}>
           {value || "Pilih tanggal..."}
         </span>
-        <CalendarIcon className="h-4 w-4 text-[#64748b]" />
+        <CalendarIcon className="h-4 w-4 text-[#0f172a]" />
       </button>
-      {open && <div className="absolute left-0 z-50 mt-1.5 w-72">{calendarCard}</div>}
+      {open && <div className="absolute left-0 z-50 mt-2 w-72">{calendarCard}</div>}
     </div>
   );
 }
@@ -205,7 +213,7 @@ export function CustomTimeSlotPicker({
         {Array.from({ length: 6 }).map((_, idx) => (
           <div
             key={idx}
-            className="h-10 rounded-xl border border-[#e2e8f0] bg-[#f1f5f9] animate-pulse"
+            className="h-10 rounded-xl border-2 border-[#0f172a] bg-[#ecfeff] animate-pulse"
           />
         ))}
       </div>
@@ -214,7 +222,7 @@ export function CustomTimeSlotPicker({
 
   if (slots.length === 0) {
     return (
-      <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-4 text-center text-xs text-[#64748b]">
+      <div className="rounded-xl border-2 border-[#0f172a] bg-[#f4f8fb] p-4 text-center text-xs font-semibold text-[#475569]">
         Tidak ada slot tersedia untuk tanggal yang dipilih. Silakan pilih tanggal lain.
       </div>
     );
@@ -231,12 +239,12 @@ export function CustomTimeSlotPicker({
             disabled={!slot.available}
             onClick={() => onChange(slot.start, slot.end)}
             className={cn(
-              "flex items-center justify-center gap-1.5 h-10 rounded-xl border text-xs font-semibold transition-colors",
+              "flex items-center justify-center gap-1.5 h-10 rounded-xl border-2 text-xs font-extrabold transition-all",
               isSelected
-                ? "border-[#059669] bg-[#059669] text-white"
+                ? "border-[#0f172a] bg-[#22d3ee] text-[#0f172a] shadow-[3px_3px_0px_#0f172a]"
                 : !slot.available
-                ? "border-[#e2e8f0] bg-[#f8fafc] text-[#94a3b8] line-through cursor-not-allowed"
-                : "border-[#cbd5e1] bg-white text-[#0f172a] hover:border-[#059669] hover:text-[#047857] cursor-pointer"
+                ? "border-[#cbd5e1] bg-[#f1f5f9] text-[#94a3b8] line-through cursor-not-allowed"
+                : "border-[#0f172a] bg-white text-[#0f172a] shadow-[2px_2px_0px_#0f172a] hover:bg-[#f3e8ff] cursor-pointer"
             )}
           >
             <Clock className="h-3.5 w-3.5" />

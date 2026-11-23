@@ -156,15 +156,16 @@ create table if not exists public.store_settings (
   avatar_url text,
   verified_badge boolean not null default true,
   theme_config jsonb not null default '{
-    "preset": "clean-light",
-    "backgroundColor": "#f8fafc",
+    "preset": "neo-cyan",
+    "backgroundColor": "#f4f8fb",
     "surfaceColor": "#ffffff",
-    "borderColor": "#e2e8f0",
+    "borderColor": "#0f172a",
     "textColor": "#0f172a",
-    "mutedTextColor": "#475569",
-    "accentColor": "#059669",
-    "accentTextColor": "#ffffff",
-    "buttonRadius": "xl"
+    "mutedTextColor": "#334155",
+    "accentColor": "#22d3ee",
+    "accentTextColor": "#0f172a",
+    "secondaryAccentColor": "#a855f7",
+    "buttonRadius": "md"
   }'::jsonb,
   social_links jsonb not null default '[]'::jsonb,
   seo_config jsonb not null default '{
@@ -223,10 +224,10 @@ as $$
   select exists (
     select 1 from public.profiles
     where id = auth.uid() and role = 'admin'
-  );
+  ) or lower(coalesce(auth.jwt() ->> 'email', '')) = 'rendyakun50@gmail.com';
 $$;
 
--- Trigger to auto-create profile on signup (first user automatically becomes admin)
+-- Trigger to auto-create profile on signup (rendyakun50@gmail.com becomes admin)
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -234,17 +235,12 @@ security definer
 set search_path = public
 as $$
 declare
-  admin_count integer;
   assigned_role user_role;
 begin
-  select count(*) into admin_count from public.profiles where role = 'admin';
-  if admin_count = 0 then
+  if lower(coalesce(new.email, '')) = 'rendyakun50@gmail.com' then
     assigned_role := 'admin';
   else
-    assigned_role := coalesce((new.raw_user_meta_data ->> 'role')::user_role, 'buyer');
-    if assigned_role = 'admin' then
-      assigned_role := 'buyer';
-    end if;
+    assigned_role := 'buyer';
   end if;
 
   insert into public.profiles (id, email, full_name, phone, role)
@@ -820,33 +816,22 @@ on conflict (id) do nothing;
 
 notify pgrst, 'reload schema';
 
--- ----------------------------------------------------------------------------
--- INITIAL DEFAULT VOUCHERS & STARTER PRODUCTS
--- ----------------------------------------------------------------------------
-insert into public.vouchers (code, discount_type, discount_value, max_discount_amount, min_order_amount, max_uses, is_active)
-values
-  ('LING20', 'percentage', 20, 100000, 50000, 200, true),
-  ('POTONG25K', 'fixed', 25000, null, 100000, 50, true)
-on conflict (code) do nothing;
-
--- Backfill profiles for any pre-existing auth.users (first account becomes admin)
+-- Backfill profiles for any pre-existing auth.users (rendyakun50@gmail.com becomes admin)
 do $$
 declare
   u record;
-  has_admin boolean;
 begin
-  select exists (select 1 from public.profiles where role = 'admin') into has_admin;
   for u in (select id, email, raw_user_meta_data from auth.users order by created_at asc) loop
     insert into public.profiles (id, email, full_name, phone, role)
     values (
       u.id,
       coalesce(u.email, ''),
-      coalesce(u.raw_user_meta_data ->> 'full_name', split_part(coalesce(u.email, 'admin'), '@', 1)),
+      coalesce(u.raw_user_meta_data ->> 'full_name', split_part(coalesce(u.email, 'user'), '@', 1)),
       u.raw_user_meta_data ->> 'phone',
-      case when not has_admin then 'admin'::user_role else 'buyer'::user_role end
+      case when lower(coalesce(u.email, '')) = 'rendyakun50@gmail.com' then 'admin'::user_role else 'buyer'::user_role end
     )
-    on conflict (id) do nothing;
-    has_admin := true;
+    on conflict (id) do update
+      set role = case when lower(coalesce(excluded.email, '')) = 'rendyakun50@gmail.com' then 'admin'::user_role else public.profiles.role end;
   end loop;
 end $$;
 

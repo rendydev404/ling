@@ -26,21 +26,21 @@ export function CustomSwitch({
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={cn(
-          "relative mt-0.5 inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors cursor-pointer disabled:opacity-50",
-          checked ? "border-[#059669] bg-[#059669]" : "border-[#cbd5e1] bg-[#e2e8f0]"
+          "relative mt-0.5 inline-flex h-6 w-11 shrink-0 items-center rounded-md border-2 border-[#0f172a] shadow-[2px_2px_0px_#0f172a] transition-colors cursor-pointer disabled:opacity-50",
+          checked ? "bg-[#22d3ee]" : "bg-[#e2e8f0]"
         )}
       >
         <span
           className={cn(
-            "inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform",
-            checked ? "translate-x-5" : "translate-x-1"
+            "inline-block h-4 w-4 rounded-xs border-2 border-[#0f172a] bg-white transition-transform",
+            checked ? "translate-x-5" : "translate-x-0.5"
           )}
         />
       </button>
       {(label || description) && (
         <span className="space-y-0.5">
-          {label && <span className="block text-sm font-semibold text-[#0f172a]">{label}</span>}
-          {description && <span className="block text-xs text-[#64748b]">{description}</span>}
+          {label && <span className="block text-sm font-extrabold text-[#0f172a]">{label}</span>}
+          {description && <span className="block text-xs text-[#475569]">{description}</span>}
         </span>
       )}
     </label>
@@ -69,7 +69,7 @@ export function CustomTabs({
     <div
       role="tablist"
       className={cn(
-        "inline-flex flex-wrap items-center gap-1 rounded-xl border border-[#e2e8f0] bg-[#f1f5f9] p-1",
+        "inline-flex flex-wrap items-center gap-1.5 rounded-xl border-2 border-[#0f172a] bg-white p-1.5 shadow-[3px_3px_0px_#0f172a]",
         className
       )}
     >
@@ -83,10 +83,10 @@ export function CustomTabs({
             aria-selected={isActive}
             onClick={() => onChange(tab.id)}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors cursor-pointer",
+              "inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-extrabold transition-all cursor-pointer",
               isActive
-                ? "bg-white text-[#0f172a] shadow-xs"
-                : "text-[#475569] hover:text-[#0f172a]"
+                ? "border-2 border-[#0f172a] bg-[#22d3ee] text-[#0f172a] shadow-[2px_2px_0px_#0f172a]"
+                : "border-2 border-transparent text-[#334155] hover:bg-[#f3e8ff] hover:text-[#0f172a]"
             )}
           >
             {tab.icon}
@@ -94,8 +94,8 @@ export function CustomTabs({
             {tab.badge !== undefined && (
               <span
                 className={cn(
-                  "rounded-md px-1.5 py-0.5 text-[10px] font-bold",
-                  isActive ? "bg-[#ecfdf5] text-[#047857]" : "bg-[#e2e8f0] text-[#475569]"
+                  "rounded-md border border-[#0f172a] px-1.5 py-0.5 text-[10px] font-extrabold",
+                  isActive ? "bg-[#a855f7] text-white" : "bg-[#f1f5f9] text-[#0f172a]"
                 )}
               >
                 {tab.badge}
@@ -118,17 +118,17 @@ export function Badge({
   className?: string;
 }) {
   const styles = {
-    neutral: "bg-[#f1f5f9] text-[#334155] border-[#e2e8f0]",
-    success: "bg-[#ecfdf5] text-[#047857] border-[#a7f3d0]",
-    warning: "bg-[#fffbeb] text-[#b45309] border-[#fde68a]",
-    danger: "bg-[#fef2f2] text-[#b91c1c] border-[#fecaca]",
-    info: "bg-[#eff6ff] text-[#1d4ed8] border-[#bfdbfe]",
+    neutral: "bg-[#f1f5f9] text-[#0f172a]",
+    success: "bg-[#67e8f9] text-[#0f172a]",
+    warning: "bg-[#fde047] text-[#0f172a]",
+    danger: "bg-[#fda4af] text-[#0f172a]",
+    info: "bg-[#d8b4fe] text-[#0f172a]",
   };
 
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap",
+        "inline-flex items-center gap-1 rounded-md border-2 border-[#0f172a] px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide shadow-[2px_2px_0px_#0f172a] whitespace-nowrap",
         styles[variant],
         className
       )}
@@ -148,7 +148,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-[#e2e8f0] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
+        "rounded-2xl border-2 border-[#0f172a] bg-white shadow-[4px_4px_0px_#0f172a]",
         className
       )}
     >
@@ -169,17 +169,17 @@ export function Pagination({
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex items-center justify-between border-t border-[#e2e8f0] pt-4">
-      <p className="text-xs text-[#64748b]">
-        Halaman <span className="font-semibold text-[#0f172a]">{page}</span> dari{" "}
-        <span className="font-semibold text-[#0f172a]">{totalPages}</span>
+    <div className="flex items-center justify-between border-t-2 border-[#0f172a] pt-4">
+      <p className="text-xs font-medium text-[#475569]">
+        Halaman <span className="font-extrabold text-[#0f172a]">{page}</span> dari{" "}
+        <span className="font-extrabold text-[#0f172a]">{totalPages}</span>
       </p>
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-2">
         <button
           type="button"
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
-          className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#cbd5e1] bg-white px-2.5 text-xs font-semibold text-[#334155] hover:bg-[#f8fafc] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+          className="inline-flex h-8 items-center gap-1 rounded-lg border-2 border-[#0f172a] bg-white px-2.5 text-xs font-extrabold text-[#0f172a] shadow-[2px_2px_0px_#0f172a] hover:bg-[#ecfeff] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
           Sebelumnya
@@ -188,7 +188,7 @@ export function Pagination({
           type="button"
           disabled={page >= totalPages}
           onClick={() => onPageChange(page + 1)}
-          className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#cbd5e1] bg-white px-2.5 text-xs font-semibold text-[#334155] hover:bg-[#f8fafc] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+          className="inline-flex h-8 items-center gap-1 rounded-lg border-2 border-[#0f172a] bg-white px-2.5 text-xs font-extrabold text-[#0f172a] shadow-[2px_2px_0px_#0f172a] hover:bg-[#ecfeff] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
         >
           Berikutnya
           <ChevronRight className="h-3.5 w-3.5" />
@@ -210,12 +210,12 @@ export function EmptyState({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#cbd5e1] bg-[#f8fafc] px-6 py-12 text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#e2e8f0] bg-white text-[#475569] mb-3.5">
+    <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#0f172a] bg-white px-6 py-12 text-center shadow-[4px_4px_0px_#0f172a]">
+      <div className="flex h-12 w-12 items-center justify-center rounded-xl border-2 border-[#0f172a] bg-[#f3e8ff] text-[#0f172a] shadow-[3px_3px_0px_#0f172a] mb-4">
         {icon}
       </div>
-      <h3 className="text-sm font-bold text-[#0f172a]">{title}</h3>
-      <p className="mt-1 max-w-sm text-xs leading-relaxed text-[#64748b]">{description}</p>
+      <h3 className="text-sm font-extrabold text-[#0f172a]">{title}</h3>
+      <p className="mt-1 max-w-sm text-xs leading-relaxed text-[#475569]">{description}</p>
       {action && <div className="mt-4">{action}</div>}
     </div>
   );

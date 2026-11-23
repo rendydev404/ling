@@ -349,88 +349,170 @@ export function ProductsManager({
             />
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-[#e2e8f0] bg-[#f8fafc] text-xs font-semibold text-[#64748b]">
-                <tr>
-                  <th className="px-5 py-3">Produk</th>
-                  <th className="px-5 py-3">Tipe</th>
-                  <th className="px-5 py-3">Harga</th>
-                  <th className="px-5 py-3">Affiliate</th>
-                  <th className="px-5 py-3">Status</th>
-                  <th className="px-5 py-3 text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#e2e8f0]">
-                {paginated.map((p) => {
-                  const meta = PRODUCT_TYPE_META[p.type];
-                  return (
-                    <tr key={p.id} className="hover:bg-[#f8fafc]">
-                      <td className="px-5 py-3.5 max-w-xs">
-                        <p className="text-sm font-bold text-[#0f172a] truncate">{p.title}</p>
-                        <p className="text-xs text-[#64748b] truncate">/p/{p.slug}</p>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <span
-                          className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-bold ${meta.accentBg} ${meta.accentText}`}
-                        >
-                          <ProductTypeIcon type={p.type} className="h-3.5 w-3.5" />
-                          {meta.shortLabel}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5 text-xs font-bold text-[#0f172a]">
-                        {formatIDR(p.price)}
-                      </td>
-                      <td className="px-5 py-3.5 text-xs text-[#475569]">
-                        {p.affiliate_enabled ? `${p.affiliate_commission_pct}%` : "Off"}
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <Badge
-                          variant={
-                            p.status === "published"
-                              ? "success"
-                              : p.status === "draft"
-                              ? "warning"
-                              : "neutral"
-                          }
-                        >
-                          {p.status}
-                        </Badge>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <Link
-                            href={`/p/${p.slug}`}
-                            target="_blank"
-                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#e2e8f0] bg-white text-[#475569] hover:text-[#0f172a]"
-                            aria-label="Lihat halaman produk"
+          <>
+            {/* Mobile Product Cards */}
+            <div className="divide-y-2 divide-[#0f172a] md:hidden">
+              {paginated.map((p) => {
+                const meta = PRODUCT_TYPE_META[p.type];
+                return (
+                  <div key={p.id} className="p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-2.5">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-md border-2 border-[#0f172a] px-2 py-0.5 text-[10px] font-black shadow-[1px_1px_0px_#0f172a] ${meta.accentBg} ${meta.accentText}`}
                           >
-                            <ExternalLink className="h-3.5 w-3.5" />
-                          </Link>
-                          <button
-                            type="button"
-                            onClick={() => openEdit(p)}
-                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#e2e8f0] bg-white text-[#475569] hover:text-[#0f172a] cursor-pointer"
-                            aria-label="Edit produk"
+                            <ProductTypeIcon type={p.type} className="h-3 w-3" />
+                            {meta.shortLabel}
+                          </span>
+                          <Badge
+                            variant={
+                              p.status === "published"
+                                ? "success"
+                                : p.status === "draft"
+                                ? "warning"
+                                : "neutral"
+                            }
                           >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDeleteTarget(p)}
-                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#fecaca] bg-white text-[#dc2626] hover:bg-[#fef2f2] cursor-pointer"
-                            aria-label="Hapus produk"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
+                            {p.status}
+                          </Badge>
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        <p className="text-sm font-black text-[#0f172a] leading-snug">
+                          {p.title}
+                        </p>
+                        <p className="text-[11px] font-semibold text-[#64748b] truncate">
+                          /p/{p.slug}
+                        </p>
+                      </div>
+                      <p className="text-sm font-black text-[#0f172a] shrink-0">
+                        {formatIDR(p.price)}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-[11px] font-bold text-[#475569]">
+                        Komisi Affiliate:{" "}
+                        <strong className="text-[#0f172a]">
+                          {p.affiliate_enabled ? `${p.affiliate_commission_pct}%` : "Off"}
+                        </strong>
+                      </span>
+
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/p/${p.slug}`}
+                          target="_blank"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-[#0f172a] bg-white text-[#0f172a] shadow-[2px_2px_0px_#0f172a]"
+                          aria-label="Lihat halaman produk"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => openEdit(p)}
+                          className="inline-flex h-8 items-center gap-1 rounded-lg border-2 border-[#0f172a] bg-[#f3e8ff] px-2.5 text-xs font-black text-[#0f172a] shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTarget(p)}
+                          className="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-[#0f172a] bg-[#ffe4e6] text-[#be123c] shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                          aria-label="Hapus produk"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="border-b-2 border-[#0f172a] bg-[#ecfeff] text-xs font-black uppercase tracking-wider text-[#0f172a]">
+                  <tr>
+                    <th className="px-5 py-3">Produk</th>
+                    <th className="px-5 py-3">Tipe</th>
+                    <th className="px-5 py-3">Harga</th>
+                    <th className="px-5 py-3">Affiliate</th>
+                    <th className="px-5 py-3">Status</th>
+                    <th className="px-5 py-3 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y-2 divide-[#0f172a]">
+                  {paginated.map((p) => {
+                    const meta = PRODUCT_TYPE_META[p.type];
+                    return (
+                      <tr key={p.id} className="hover:bg-[#f4f8fb]">
+                        <td className="px-5 py-3.5 max-w-xs">
+                          <p className="text-sm font-black text-[#0f172a] truncate">{p.title}</p>
+                          <p className="text-xs font-semibold text-[#475569] truncate">/p/{p.slug}</p>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-lg border-2 border-[#0f172a] px-2.5 py-1 text-[11px] font-black shadow-[2px_2px_0px_#0f172a] ${meta.accentBg} ${meta.accentText}`}
+                          >
+                            <ProductTypeIcon type={p.type} className="h-3.5 w-3.5" />
+                            {meta.shortLabel}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5 text-xs font-black text-[#0f172a]">
+                          {formatIDR(p.price)}
+                        </td>
+                        <td className="px-5 py-3.5 text-xs font-bold text-[#334155]">
+                          {p.affiliate_enabled ? `${p.affiliate_commission_pct}%` : "Off"}
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <Badge
+                            variant={
+                              p.status === "published"
+                                ? "success"
+                                : p.status === "draft"
+                                ? "warning"
+                                : "neutral"
+                            }
+                          >
+                            {p.status}
+                          </Badge>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center justify-end gap-2">
+                            <Link
+                              href={`/p/${p.slug}`}
+                              target="_blank"
+                              className="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-[#0f172a] bg-white text-[#0f172a] shadow-[2px_2px_0px_#0f172a] hover:bg-[#ecfeff] transition-colors"
+                              aria-label="Lihat halaman produk"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() => openEdit(p)}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-[#0f172a] bg-[#f3e8ff] text-[#0f172a] shadow-[2px_2px_0px_#0f172a] hover:bg-[#d8b4fe] transition-colors cursor-pointer"
+                              aria-label="Edit produk"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeleteTarget(p)}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-[#0f172a] bg-[#ffe4e6] text-[#be123c] shadow-[2px_2px_0px_#0f172a] hover:bg-[#fda4af] transition-colors cursor-pointer"
+                              aria-label="Hapus produk"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
         <div className="px-5 pb-4">
           <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
@@ -495,13 +577,13 @@ export function ProductsManager({
                   slug: form.id ? form.slug : slugify(e.target.value),
                 })
               }
-              placeholder="Contoh: Template Notion Creator OS"
+              placeholder="Masukkan judul produk"
             />
             <Input
               label="URL Slug"
               value={form.slug}
               onChange={(e) => setForm({ ...form, slug: slugify(e.target.value) })}
-              placeholder="template-notion-creator-os"
+              placeholder="nama-produk-anda"
             />
           </div>
 
@@ -542,8 +624,8 @@ export function ProductsManager({
 
           {/* Type-specific settings */}
           {form.type === "digital" && (
-            <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-4 space-y-3">
-              <p className="text-xs font-bold uppercase tracking-wider text-[#059669]">
+            <div className="rounded-xl border-2 border-[#0f172a] bg-[#ecfeff] p-4 space-y-3 shadow-[3px_3px_0px_#0f172a]">
+              <p className="text-xs font-black uppercase tracking-wider text-[#0f172a]">
                 Pengaturan Produk Digital
               </p>
               <Input
@@ -562,8 +644,8 @@ export function ProductsManager({
           )}
 
           {form.type === "appointment" && (
-            <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-4 space-y-3">
-              <p className="text-xs font-bold uppercase tracking-wider text-[#b45309]">
+            <div className="rounded-xl border-2 border-[#0f172a] bg-[#fef08a]/50 p-4 space-y-3 shadow-[3px_3px_0px_#0f172a]">
+              <p className="text-xs font-black uppercase tracking-wider text-[#0f172a]">
                 Pengaturan Jadwal 1-on-1
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -595,8 +677,8 @@ export function ProductsManager({
           )}
 
           {form.type === "event" && (
-            <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-4 space-y-3">
-              <p className="text-xs font-bold uppercase tracking-wider text-[#7e22ce]">
+            <div className="rounded-xl border-2 border-[#0f172a] bg-[#f3e8ff] p-4 space-y-3 shadow-[3px_3px_0px_#0f172a]">
+              <p className="text-xs font-black uppercase tracking-wider text-[#0f172a]">
                 Pengaturan Event & Webinar
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -604,7 +686,7 @@ export function ProductsManager({
                   label="Tanggal & Jam (ISO / WIB)"
                   value={form.event_date}
                   onChange={(e) => setForm({ ...form, event_date: e.target.value })}
-                  placeholder="2026-12-20T19:00:00+07:00"
+                  placeholder="YYYY-MM-DDTHH:MM:00+07:00"
                 />
                 <Input
                   label="Lokasi / Platform"
@@ -621,8 +703,8 @@ export function ProductsManager({
           )}
 
           {form.type === "physical" && (
-            <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-4 space-y-3">
-              <p className="text-xs font-bold uppercase tracking-wider text-[#334155]">
+            <div className="rounded-xl border-2 border-[#0f172a] bg-[#f4f8fb] p-4 space-y-3 shadow-[3px_3px_0px_#0f172a]">
+              <p className="text-xs font-black uppercase tracking-wider text-[#0f172a]">
                 Pengaturan Produk Fisik
               </p>
               <Input
@@ -635,8 +717,8 @@ export function ProductsManager({
           )}
 
           {form.type === "membership" && (
-            <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-4 space-y-3">
-              <p className="text-xs font-bold uppercase tracking-wider text-[#a16207]">
+            <div className="rounded-xl border-2 border-[#0f172a] bg-[#f3e8ff] p-4 space-y-3 shadow-[3px_3px_0px_#0f172a]">
+              <p className="text-xs font-black uppercase tracking-wider text-[#0f172a]">
                 Pengaturan Membership
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -672,8 +754,8 @@ export function ProductsManager({
           )}
 
           {/* Order Bump & Affiliate */}
-          <div className="rounded-xl border border-[#e2e8f0] p-4 space-y-4">
-            <p className="text-xs font-bold uppercase tracking-wider text-[#0f172a]">
+          <div className="rounded-xl border-2 border-[#0f172a] bg-white p-4 space-y-4 shadow-[3px_3px_0px_#0f172a]">
+            <p className="text-xs font-black uppercase tracking-wider text-[#0f172a]">
               Optimasi Konversi: Order Bump & Affiliate
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -697,17 +779,17 @@ export function ProductsManager({
                 type="number"
                 value={form.order_bump_price}
                 onChange={(e) => setForm({ ...form, order_bump_price: e.target.value })}
-                placeholder="39000"
+                placeholder="0"
               />
             </div>
             <Input
               label="Headline Penawaran Order Bump"
               value={form.order_bump_headline}
               onChange={(e) => setForm({ ...form, order_bump_headline: e.target.value })}
-              placeholder="Tambahkan bonus eksklusif dengan hemat 60%!"
+              placeholder="Tambahkan bonus pendamping..."
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center pt-2 border-t border-[#e2e8f0]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center pt-2 border-t-2 border-[#0f172a]">
               <CustomSwitch
                 checked={form.affiliate_enabled}
                 onChange={(checked) => setForm({ ...form, affiliate_enabled: checked })}

@@ -49,7 +49,7 @@ export function CustomModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0f172a]/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0f172a]/60 p-4"
       role="dialog"
       aria-modal="true"
       onMouseDown={(e) => {
@@ -58,20 +58,20 @@ export function CustomModal({
     >
       <div
         className={cn(
-          "w-full rounded-2xl border border-[#e2e8f0] bg-white shadow-xl flex flex-col max-h-[90vh]",
+          "w-full rounded-2xl border-2 border-[#0f172a] bg-white shadow-[6px_6px_0px_#0f172a] flex flex-col max-h-[90vh]",
           sizeClass[size]
         )}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-[#e2e8f0] px-6 py-4">
+        <div className="flex items-start justify-between gap-4 border-b-2 border-[#0f172a] bg-[#ecfeff] px-6 py-4 rounded-t-2xl">
           <div>
-            <h2 className="text-base font-bold text-[#0f172a]">{title}</h2>
-            {description && <p className="mt-0.5 text-xs text-[#64748b]">{description}</p>}
+            <h2 className="text-base font-extrabold text-[#0f172a]">{title}</h2>
+            {description && <p className="mt-0.5 text-xs font-medium text-[#334155]">{description}</p>}
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Tutup dialog"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-[#64748b] hover:bg-[#f1f5f9] hover:text-[#0f172a] cursor-pointer"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-[#0f172a] bg-white text-[#0f172a] shadow-[2px_2px_0px_#0f172a] hover:bg-[#a855f7] hover:text-white cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
@@ -80,7 +80,7 @@ export function CustomModal({
         <div className="overflow-y-auto px-6 py-5">{children}</div>
 
         {footer && (
-          <div className="flex items-center justify-end gap-2.5 border-t border-[#e2e8f0] bg-[#f8fafc] px-6 py-3.5 rounded-b-2xl">
+          <div className="flex items-center justify-end gap-2.5 border-t-2 border-[#0f172a] bg-[#f4f8fb] px-6 py-3.5 rounded-b-2xl">
             {footer}
           </div>
         )}
@@ -137,13 +137,13 @@ export function CustomConfirmDialog({
       <div className="flex items-start gap-3.5">
         <div
           className={cn(
-            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
-            variant === "danger" ? "bg-[#fef2f2] text-[#dc2626]" : "bg-[#ecfdf5] text-[#059669]"
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-[#0f172a] shadow-[2px_2px_0px_#0f172a]",
+            variant === "danger" ? "bg-[#fda4af] text-[#0f172a]" : "bg-[#67e8f9] text-[#0f172a]"
           )}
         >
           <AlertTriangle className="h-5 w-5" />
         </div>
-        <p className="text-sm leading-relaxed text-[#475569]">{description}</p>
+        <p className="text-sm font-medium leading-relaxed text-[#334155]">{description}</p>
       </div>
     </CustomModal>
   );

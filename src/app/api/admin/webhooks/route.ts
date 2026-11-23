@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createServerSupabaseClient, isSupabaseServerConfigured } from "@/lib/supabase/server";
+import { isSupabaseServerConfigured } from "@/lib/supabase/server";
+import { assertAdminApi } from "@/lib/supabase/auth";
 
 const schema = z.object({
   name: z.string().min(2).max(120),
@@ -9,28 +10,11 @@ const schema = z.object({
   events: z.array(z.string()).min(1),
 });
 
-async function assertAdmin() {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-  if (profile?.role !== "admin") {
-    return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
-  }
-  return { supabase };
-}
-
 export async function POST(request: Request) {
   if (!isSupabaseServerConfigured()) {
     return NextResponse.json({ error: "Supabase belum dikonfigurasi" }, { status: 503 });
   }
-  const auth = await assertAdmin();
+  const auth = await assertAdminApi();
   if ("error" in auth) return auth.error;
 
   const body = await request.json();
@@ -53,7 +37,7 @@ export async function DELETE(request: Request) {
   if (!isSupabaseServerConfigured()) {
     return NextResponse.json({ error: "Supabase belum dikonfigurasi" }, { status: 503 });
   }
-  const auth = await assertAdmin();
+  const auth = await assertAdminApi();
   if ("error" in auth) return auth.error;
 
   const id = new URL(request.url).searchParams.get("id");

@@ -29,8 +29,6 @@ export default async function PortalCoursePage({
       .eq("user_id", user.id)
       .eq("product_id", product.id);
     completedIds = (progress ?? []).map((p) => p.lesson_id as string);
-  } else {
-    completedIds = ["les-1"];
   }
 
   return (

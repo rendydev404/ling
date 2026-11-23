@@ -19,18 +19,6 @@ export default async function AdminIntegrationsPage() {
       .order("created_at", { ascending: false })
       .limit(50);
     webhooks = (data as OutboundWebhook[] | null) ?? [];
-  } else {
-    webhooks = [
-      {
-        id: "wh-demo-1",
-        name: "WhatsApp Auto-Followup (StarSender / n8n)",
-        target_url: "https://example.com/webhooks/ling-order-paid",
-        secret_key: "whsec_demo_12345",
-        events: ["order.paid"],
-        is_active: true,
-        created_at: new Date().toISOString(),
-      },
-    ];
   }
 
   return (

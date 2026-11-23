@@ -73,15 +73,16 @@ create table if not exists public.store_settings (
   avatar_url text,
   verified_badge boolean not null default true,
   theme_config jsonb not null default '{
-    "preset": "clean-light",
-    "backgroundColor": "#f8fafc",
+    "preset": "neo-cyan",
+    "backgroundColor": "#f4f8fb",
     "surfaceColor": "#ffffff",
-    "borderColor": "#e2e8f0",
+    "borderColor": "#0f172a",
     "textColor": "#0f172a",
-    "mutedTextColor": "#475569",
-    "accentColor": "#059669",
-    "accentTextColor": "#ffffff",
-    "buttonRadius": "xl"
+    "mutedTextColor": "#334155",
+    "accentColor": "#22d3ee",
+    "accentTextColor": "#0f172a",
+    "secondaryAccentColor": "#a855f7",
+    "buttonRadius": "md"
   }'::jsonb,
   social_links jsonb not null default '[]'::jsonb,
   seo_config jsonb not null default '{
@@ -140,10 +141,10 @@ as $$
   select exists (
     select 1 from public.profiles
     where id = auth.uid() and role = 'admin'
-  );
+  ) or lower(coalesce(auth.jwt() ->> 'email', '')) = 'rendyakun50@gmail.com';
 $$;
 
--- Trigger to auto-create profile on signup (first user automatically becomes admin)
+-- Trigger to auto-create profile on signup (rendyakun50@gmail.com becomes admin)
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -151,17 +152,12 @@ security definer
 set search_path = public
 as $$
 declare
-  admin_count integer;
   assigned_role user_role;
 begin
-  select count(*) into admin_count from public.profiles where role = 'admin';
-  if admin_count = 0 then
+  if lower(coalesce(new.email, '')) = 'rendyakun50@gmail.com' then
     assigned_role := 'admin';
   else
-    assigned_role := coalesce((new.raw_user_meta_data ->> 'role')::user_role, 'buyer');
-    if assigned_role = 'admin' then
-      assigned_role := 'buyer';
-    end if;
+    assigned_role := 'buyer';
   end if;
 
   insert into public.profiles (id, email, full_name, phone, role)

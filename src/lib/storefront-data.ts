@@ -1,10 +1,4 @@
-import {
-  DEFAULT_STORE_SETTINGS,
-  DEMO_BIO_BLOCKS,
-  DEMO_COURSE_SECTIONS,
-  DEMO_PRODUCTS,
-  DEMO_VARIANTS,
-} from "./demo-data";
+import { DEFAULT_STORE_SETTINGS } from "./demo-data";
 import { createServerSupabaseClient, isSupabaseServerConfigured } from "./supabase/server";
 import type {
   AppointmentAvailability,
@@ -28,8 +22,8 @@ export async function getStorefrontBundle(): Promise<{
   if (!isSupabaseServerConfigured()) {
     return {
       settings: DEFAULT_STORE_SETTINGS,
-      blocks: DEMO_BIO_BLOCKS,
-      products: DEMO_PRODUCTS,
+      blocks: [],
+      products: [],
       isDemoMode: true,
     };
   }
@@ -61,13 +55,12 @@ export async function getStorefrontBundle(): Promise<{
       .limit(100),
   ]);
 
-  // Graceful fallback if SQL schema has not been applied to Supabase yet
   if (productsRes.error?.code === "PGRST205" || settingsRes.error?.code === "PGRST205") {
     return {
       settings: DEFAULT_STORE_SETTINGS,
-      blocks: DEMO_BIO_BLOCKS,
-      products: DEMO_PRODUCTS,
-      isDemoMode: true,
+      blocks: [],
+      products: [],
+      isDemoMode: false,
     };
   }
 
@@ -97,48 +90,13 @@ export async function getProductBySlug(slug: string): Promise<{
   isDemoMode: boolean;
 }> {
   if (!isSupabaseServerConfigured()) {
-    const product = DEMO_PRODUCTS.find((p) => p.slug === slug) ?? null;
-    const orderBumpProduct = product?.order_bump_product_id
-      ? DEMO_PRODUCTS.find((p) => p.id === product.order_bump_product_id) ?? null
-      : null;
-
     return {
-      product,
-      variants: product ? DEMO_VARIANTS[product.id] ?? [] : [],
-      courseSections: product ? DEMO_COURSE_SECTIONS[product.id] ?? [] : [],
-      availability:
-        product?.type === "appointment"
-          ? [1, 2, 3, 4, 5].map((day) => ({
-              id: `avail-${day}`,
-              product_id: product.id,
-              day_of_week: day,
-              start_time: "09:00",
-              end_time: "17:00",
-              is_active: true,
-            }))
-          : [],
-      orderBumpProduct,
-      recentDonations:
-        product?.type === "donation"
-          ? [
-              {
-                id: "don-1",
-                supporter_name: "Raka Pratama",
-                is_anonymous: false,
-                message: "Terima kasih kontennya selalu daging dan praktis!",
-                amount: 50000,
-                created_at: new Date().toISOString(),
-              },
-              {
-                id: "don-2",
-                supporter_name: "Anonim",
-                is_anonymous: true,
-                message: "Semangat terus berkarya.",
-                amount: 25000,
-                created_at: new Date().toISOString(),
-              },
-            ]
-          : [],
+      product: null,
+      variants: [],
+      courseSections: [],
+      availability: [],
+      orderBumpProduct: null,
+      recentDonations: [],
       settings: DEFAULT_STORE_SETTINGS,
       isDemoMode: true,
     };
@@ -160,33 +118,6 @@ export async function getProductBySlug(slug: string): Promise<{
       .eq("status", "published")
       .single(),
   ]);
-
-  if (productRes.error?.code === "PGRST205" || settingsRes.error?.code === "PGRST205") {
-    const fallbackProduct = DEMO_PRODUCTS.find((p) => p.slug === slug) ?? null;
-    const fallbackBump = fallbackProduct?.order_bump_product_id
-      ? DEMO_PRODUCTS.find((p) => p.id === fallbackProduct.order_bump_product_id) ?? null
-      : null;
-    return {
-      product: fallbackProduct,
-      variants: fallbackProduct ? DEMO_VARIANTS[fallbackProduct.id] ?? [] : [],
-      courseSections: fallbackProduct ? DEMO_COURSE_SECTIONS[fallbackProduct.id] ?? [] : [],
-      availability:
-        fallbackProduct?.type === "appointment"
-          ? [1, 2, 3, 4, 5].map((day) => ({
-              id: `avail-${day}`,
-              product_id: fallbackProduct.id,
-              day_of_week: day,
-              start_time: "09:00",
-              end_time: "17:00",
-              is_active: true,
-            }))
-          : [],
-      orderBumpProduct: fallbackBump,
-      recentDonations: [],
-      settings: DEFAULT_STORE_SETTINGS,
-      isDemoMode: true,
-    };
-  }
 
   const settings = (settingsRes.data as StoreSettings | null) ?? DEFAULT_STORE_SETTINGS;
   const product = (productRes.data as Product | null) ?? null;
@@ -260,7 +191,6 @@ export async function getProductBySlug(slug: string): Promise<{
         : Promise.resolve({ data: [] }),
     ]);
 
-  // Assemble sections + lessons without N+1 queries
   const lessonsBySection = new Map<string, CourseLesson[]>();
   for (const lesson of (lessonsRes.data as CourseLesson[] | null) ?? []) {
     const existing = lessonsBySection.get(lesson.section_id) ?? [];

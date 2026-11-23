@@ -69,13 +69,11 @@ export function CheckoutClient({
   const { toast } = useToast();
   const meta = PRODUCT_TYPE_META[product.type];
 
-  // Customer info
   const [buyerName, setBuyerName] = React.useState("");
   const [buyerEmail, setBuyerEmail] = React.useState("");
   const [buyerPhone, setBuyerPhone] = React.useState("");
   const [buyerNote, setBuyerNote] = React.useState("");
 
-  // Variant / Quantity / Custom Amount (Donation / PWYW)
   const [variantId, setVariantId] = React.useState(variants[0]?.id ?? "");
   const [quantity, setQuantity] = React.useState(1);
   const [customAmount, setCustomAmount] = React.useState(
@@ -83,7 +81,6 @@ export function CheckoutClient({
   );
   const [donationAnonymous, setDonationAnonymous] = React.useState(false);
 
-  // Appointment Date & Time Slot
   const todayIso = new Date().toISOString().slice(0, 10);
   const [bookingDate, setBookingDate] = React.useState("");
   const [slots, setSlots] = React.useState<TimeSlotOption[]>([]);
@@ -92,7 +89,6 @@ export function CheckoutClient({
     null
   );
 
-  // Physical Shipping
   const [courierCode, setCourierCode] = React.useState(
     settings.shipping_options[0]?.code ?? ""
   );
@@ -101,7 +97,6 @@ export function CheckoutClient({
   const [address, setAddress] = React.useState("");
   const [postalCode, setPostalCode] = React.useState("");
 
-  // Order Bump & Voucher
   const [includeOrderBump, setIncludeOrderBump] = React.useState(false);
   const [voucherInput, setVoucherInput] = React.useState("");
   const [appliedVoucher, setAppliedVoucher] = React.useState<{
@@ -109,7 +104,6 @@ export function CheckoutClient({
     discountAmount: number;
   } | null>(null);
   const [validatingVoucher, setValidatingVoucher] = React.useState(false);
-
   const [submitting, setSubmitting] = React.useState(false);
 
   function handleBookingDateChange(nextDate: string) {
@@ -239,7 +233,6 @@ export function CheckoutClient({
         return url;
       };
 
-      // If real Midtrans Snap popup is loaded & not simulated, trigger Snap popup
       if (!json.isSimulated && json.snapToken && window.snap) {
         const dest = toInternalPath(statusDestination);
         window.snap.pay(json.snapToken, {
@@ -252,7 +245,6 @@ export function CheckoutClient({
         return;
       }
 
-      // Otherwise navigate to Midtrans hosted payment page or internal order confirmation URL
       const fallbackUrl: string = json.redirectUrl || statusDestination;
       if (fallbackUrl.startsWith("http://") || fallbackUrl.startsWith("https://")) {
         const internal = toInternalPath(fallbackUrl);
@@ -270,7 +262,7 @@ export function CheckoutClient({
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-[#0f172a]">
+    <div className="min-h-screen text-[#0f172a]">
       {midtransClientKey && !midtransClientKey.includes("xxxxxxxx") && (
         <Script
           src={snapScriptUrl}
@@ -279,16 +271,16 @@ export function CheckoutClient({
         />
       )}
 
-      <header className="sticky top-0 z-20 border-b border-[#e2e8f0] bg-white">
+      <header className="sticky top-0 z-20 border-b-2 border-[#0f172a] bg-white">
         <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
           <Link
             href={`/p/${product.slug}`}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#475569] hover:text-[#0f172a]"
+            className="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#0f172a] bg-white px-2.5 py-1 text-xs font-extrabold text-[#0f172a] shadow-[2px_2px_0px_#0f172a] hover:bg-[#ecfeff]"
           >
             <ArrowLeft className="h-4 w-4" />
-            Kembali ke Detail Produk
+            Kembali
           </Link>
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#059669]">
+          <span className="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#0f172a] bg-[#67e8f9] px-2.5 py-1 text-xs font-extrabold text-[#0f172a] shadow-[2px_2px_0px_#0f172a]">
             <Lock className="h-3.5 w-3.5" />
             Checkout Aman Midtrans
           </span>
@@ -299,7 +291,6 @@ export function CheckoutClient({
         <form onSubmit={handleCheckout} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Form */}
           <div className="lg:col-span-7 space-y-5">
-            {/* Customer Details */}
             <Card className="p-6 space-y-4">
               <h2 className="text-base font-extrabold text-[#0f172a]">1. Informasi Pembeli</h2>
               <Input
@@ -328,7 +319,6 @@ export function CheckoutClient({
               </div>
             </Card>
 
-            {/* Donation / PWYW Amount Picker */}
             {(product.type === "donation" || product.is_pay_what_you_want) && (
               <Card className="p-6 space-y-4">
                 <h2 className="text-base font-extrabold text-[#0f172a]">
@@ -343,10 +333,10 @@ export function CheckoutClient({
                           key={amt}
                           type="button"
                           onClick={() => setCustomAmount(String(amt))}
-                          className={`h-10 rounded-xl border text-xs font-bold transition-colors cursor-pointer ${
+                          className={`h-10 rounded-xl border-2 border-[#0f172a] text-xs font-extrabold transition-all cursor-pointer ${
                             active
-                              ? "border-[#059669] bg-[#059669] text-white"
-                              : "border-[#cbd5e1] bg-white text-[#0f172a] hover:border-[#059669]"
+                              ? "bg-[#22d3ee] text-[#0f172a] shadow-[3px_3px_0px_#0f172a]"
+                              : "bg-white text-[#0f172a] shadow-[2px_2px_0px_#0f172a] hover:bg-[#f3e8ff]"
                           }`}
                         >
                           {formatIDR(amt)}
@@ -378,7 +368,6 @@ export function CheckoutClient({
               </Card>
             )}
 
-            {/* Appointment Date & Slot Picker */}
             {product.type === "appointment" && (
               <Card className="p-6 space-y-4">
                 <h2 className="text-base font-extrabold text-[#0f172a]">
@@ -394,7 +383,7 @@ export function CheckoutClient({
                 />
                 {bookingDate && (
                   <div className="space-y-2 pt-2">
-                    <span className="block text-xs font-semibold text-[#334155]">
+                    <span className="block text-xs font-extrabold uppercase tracking-wider text-[#0f172a]">
                       Pilih Jam Tersedia (WIB)
                     </span>
                     <CustomTimeSlotPicker
@@ -414,7 +403,6 @@ export function CheckoutClient({
               </Card>
             )}
 
-            {/* Physical Variant & Shipping Address */}
             {product.type === "physical" && (
               <Card className="p-6 space-y-4">
                 <h2 className="text-base font-extrabold text-[#0f172a]">
@@ -473,7 +461,7 @@ export function CheckoutClient({
                   required
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Jl. Kemang Raya No. 12..."
+                  placeholder="Alamat pengiriman lengkap..."
                 />
                 <Input
                   label="Kode Pos"
@@ -485,40 +473,40 @@ export function CheckoutClient({
               </Card>
             )}
 
-            {/* Order Bump Card */}
+            {/* Order Bump Card in Purple & Cyan Neobrutalism */}
             {orderBumpProduct && (
               <div
                 onClick={() => setIncludeOrderBump((prev) => !prev)}
-                className={`rounded-2xl border-2 p-5 transition-colors cursor-pointer ${
+                className={`rounded-2xl border-2 border-[#0f172a] p-5 shadow-[4px_4px_0px_#0f172a] transition-all cursor-pointer ${
                   includeOrderBump
-                    ? "border-[#059669] bg-[#ecfdf5]"
-                    : "border-dashed border-[#059669] bg-white hover:bg-[#f8fafc]"
+                    ? "bg-[#f3e8ff]"
+                    : "border-dashed bg-white hover:bg-[#ecfeff]"
                 }`}
               >
                 <div className="flex items-start gap-3.5">
                   <div
-                    className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
+                    className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 border-[#0f172a] shadow-[2px_2px_0px_#0f172a] ${
                       includeOrderBump
-                        ? "border-[#059669] bg-[#059669] text-white"
-                        : "border-[#94a3b8] bg-white"
+                        ? "bg-[#a855f7] text-white"
+                        : "bg-white"
                     }`}
                   >
-                    {includeOrderBump && <Check className="h-3.5 w-3.5" />}
+                    {includeOrderBump && <Check className="h-4 w-4" />}
                   </div>
                   <div className="flex-1">
-                    <div className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[#047857]">
+                    <div className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[#7e22ce]">
                       <Sparkles className="h-3.5 w-3.5" />
                       Penawaran Tambahan Sekali Klik (Order Bump)
                     </div>
-                    <p className="mt-1 text-sm font-bold text-[#0f172a]">
+                    <p className="mt-1 text-sm font-extrabold text-[#0f172a]">
                       {product.order_bump_headline || `Tambahkan ${orderBumpProduct.title}`}
                     </p>
-                    <p className="mt-0.5 text-xs text-[#475569]">
+                    <p className="mt-0.5 text-xs font-medium text-[#334155]">
                       Cukup tambah{" "}
-                      <span className="font-extrabold text-[#059669]">
+                      <span className="font-extrabold text-[#0e7490]">
                         {formatIDR(product.order_bump_price ?? orderBumpProduct.price)}
                       </span>{" "}
-                      <span className="line-through text-[#94a3b8]">
+                      <span className="line-through text-[#64748b]">
                         {formatIDR(orderBumpProduct.price)}
                       </span>
                     </p>
@@ -533,38 +521,40 @@ export function CheckoutClient({
             <Card className="p-6 space-y-5">
               <h2 className="text-base font-extrabold text-[#0f172a]">Ringkasan Pesanan</h2>
 
-              <div className="flex items-start gap-3 pb-4 border-b border-[#e2e8f0]">
+              <div className="flex items-start gap-3 pb-4 border-b-2 border-[#0f172a]">
                 <div
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${meta.accentBg} ${meta.accentText}`}
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-[#0f172a] shadow-[2px_2px_0px_#0f172a] ${meta.accentBg} ${meta.accentText}`}
                 >
                   <ProductTypeIcon type={product.type} className="h-5 w-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold text-[#0f172a] leading-snug">{product.title}</p>
-                  <p className="text-xs text-[#64748b] mt-0.5">
+                  <p className="text-sm font-extrabold text-[#0f172a] leading-snug">
+                    {product.title}
+                  </p>
+                  <p className="text-xs font-medium text-[#475569] mt-0.5">
                     {selectedVariant ? selectedVariant.name : meta.label} · Qty {quantity}
                   </p>
                 </div>
-                <span className="text-sm font-bold text-[#0f172a]">
+                <span className="text-sm font-extrabold text-[#0f172a]">
                   {formatIDR(mainSubtotal)}
                 </span>
               </div>
 
               {/* Voucher Input */}
               <div className="space-y-2">
-                <label className="block text-xs font-semibold text-[#334155]">
+                <label className="block text-xs font-extrabold uppercase tracking-wider text-[#0f172a]">
                   Punya Kode Voucher?
                 </label>
                 <div className="flex gap-2">
                   <Input
                     value={voucherInput}
                     onChange={(e) => setVoucherInput(e.target.value.toUpperCase())}
-                    placeholder="Contoh: LING20"
+                    placeholder="Masukkan kode kupon"
                     leftIcon={<Tag className="h-3.5 w-3.5" />}
                   />
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="secondary"
                     onClick={handleApplyVoucher}
                     isLoading={validatingVoucher}
                   >
@@ -572,7 +562,7 @@ export function CheckoutClient({
                   </Button>
                 </div>
                 {appliedVoucher && (
-                  <p className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#059669]">
+                  <p className="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#0f172a] bg-[#cffafe] px-2.5 py-1 text-xs font-extrabold text-[#0f172a]">
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     Kode {appliedVoucher.code} aktif (-{formatIDR(appliedVoucher.discountAmount)})
                   </p>
@@ -580,32 +570,34 @@ export function CheckoutClient({
               </div>
 
               {/* Breakdown */}
-              <div className="space-y-2 border-t border-[#e2e8f0] pt-4 text-xs">
-                <div className="flex justify-between text-[#475569]">
+              <div className="space-y-2 border-t-2 border-[#0f172a] pt-4 text-xs font-semibold">
+                <div className="flex justify-between text-[#334155]">
                   <span>Subtotal Produk</span>
-                  <span className="font-semibold text-[#0f172a]">{formatIDR(mainSubtotal)}</span>
+                  <span className="font-extrabold text-[#0f172a]">{formatIDR(mainSubtotal)}</span>
                 </div>
                 {bumpPrice > 0 && (
-                  <div className="flex justify-between text-[#475569]">
+                  <div className="flex justify-between text-[#334155]">
                     <span>Order Bump</span>
-                    <span className="font-semibold text-[#0f172a]">{formatIDR(bumpPrice)}</span>
+                    <span className="font-extrabold text-[#7e22ce]">{formatIDR(bumpPrice)}</span>
                   </div>
                 )}
                 {discountAmount > 0 && (
-                  <div className="flex justify-between text-[#059669]">
+                  <div className="flex justify-between text-[#0e7490]">
                     <span>Diskon Voucher</span>
-                    <span className="font-bold">-{formatIDR(discountAmount)}</span>
+                    <span className="font-extrabold">-{formatIDR(discountAmount)}</span>
                   </div>
                 )}
                 {shippingCost > 0 && (
-                  <div className="flex justify-between text-[#475569]">
+                  <div className="flex justify-between text-[#334155]">
                     <span>Ongkir ({selectedCourier?.name})</span>
-                    <span className="font-semibold text-[#0f172a]">{formatIDR(shippingCost)}</span>
+                    <span className="font-extrabold text-[#0f172a]">{formatIDR(shippingCost)}</span>
                   </div>
                 )}
-                <div className="flex justify-between border-t border-[#e2e8f0] pt-3 text-base font-extrabold text-[#0f172a]">
+                <div className="flex justify-between border-t-2 border-[#0f172a] pt-3 text-base font-extrabold text-[#0f172a]">
                   <span>Total Bayar</span>
-                  <span className="text-[#059669]">{formatIDR(grandTotal)}</span>
+                  <span className="rounded-lg border-2 border-[#0f172a] bg-[#67e8f9] px-2.5 py-0.5 shadow-[2px_2px_0px_#0f172a]">
+                    {formatIDR(grandTotal)}
+                  </span>
                 </div>
               </div>
 
@@ -613,8 +605,8 @@ export function CheckoutClient({
                 Bayar Sekarang — {formatIDR(grandTotal)}
               </Button>
 
-              <div className="flex items-center justify-center gap-1.5 text-[11px] text-[#64748b]">
-                <ShieldCheck className="h-4 w-4 text-[#059669]" />
+              <div className="flex items-center justify-center gap-1.5 text-[11px] font-bold text-[#334155]">
+                <ShieldCheck className="h-4 w-4 text-[#0891b2]" />
                 <span>QRIS · Virtual Account · GoPay · ShopeePay · Kartu Kredit</span>
               </div>
             </Card>

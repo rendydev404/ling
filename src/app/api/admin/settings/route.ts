@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createServerSupabaseClient, isSupabaseServerConfigured } from "@/lib/supabase/server";
+import { isSupabaseServerConfigured } from "@/lib/supabase/server";
+import { assertAdminApi } from "@/lib/supabase/auth";
 
 const settingsSchema = z.object({
   brand_name: z.string().min(1).max(120),
@@ -23,20 +24,8 @@ export async function PUT(request: Request) {
     return NextResponse.json({ ok: true, simulated: true });
   }
 
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-  if (profile?.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const auth = await assertAdminApi();
+  if ("error" in auth) return auth.error;
 
   const body = await request.json();
   const parsed = settingsSchema.safeParse(body);
@@ -44,7 +33,7 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { error } = await supabase
+  const { error } = await auth.supabase
     .from("store_settings")
     .update({ ...parsed.data, updated_at: new Date().toISOString() })
     .eq("singleton_key", "primary");
