@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { NextResponse } from "next/server";
 import { redirect } from "next/navigation";
 import {
@@ -16,10 +17,10 @@ export function isPrimaryAdminEmail(email: string | null | undefined): boolean {
   return (email ?? "").trim().toLowerCase() === PRIMARY_ADMIN_EMAIL;
 }
 
-export async function getCurrentUserProfile(): Promise<{
+export const getCurrentUserProfile = cache(async (): Promise<{
   user: { id: string; email: string } | null;
   profile: Profile | null;
-}> {
+}> => {
   if (!isSupabaseServerConfigured()) {
     return { user: null, profile: null };
   }
@@ -36,6 +37,26 @@ export async function getCurrentUserProfile(): Promise<{
   const email = user.email ?? "";
   const isOwnerEmail = isPrimaryAdminEmail(email);
 
+  // Fast-path for Primary Admin: skip redundant DB profile round-trip on every navigation
+  if (isOwnerEmail) {
+    return {
+      user: { id: user.id, email },
+      profile: {
+        id: user.id,
+        email,
+        full_name:
+          (user.user_metadata?.full_name as string | undefined) || "Rendy (Admin)",
+        phone: (user.user_metadata?.phone as string | undefined) ?? null,
+        avatar_url: null,
+        role: "admin",
+        bank_name: null,
+        bank_account_number: null,
+        bank_account_holder: null,
+        created_at: user.created_at ?? new Date().toISOString(),
+      },
+    };
+  }
+
   const { data: profile, error: profileErr } = await supabase
     .from("profiles")
     .select(PROFILE_COLUMNS)
@@ -43,32 +64,15 @@ export async function getCurrentUserProfile(): Promise<{
     .single();
 
   if (profile) {
-    const typedProfile = profile as Profile;
-    if (isOwnerEmail && typedProfile.role !== "admin") {
-      const serviceClient = createServiceRoleClient();
-      if (serviceClient) {
-        await serviceClient
-          .from("profiles")
-          .update({ role: "admin" })
-          .eq("id", user.id);
-      }
-      return {
-        user: { id: user.id, email },
-        profile: { ...typedProfile, role: "admin" },
-      };
-    }
-
     return {
       user: { id: user.id, email },
-      profile: typedProfile,
+      profile: profile as Profile,
     };
   }
 
-  // Auto-provision profile row if user already existed in auth.users before schema reset
   if (profileErr?.code !== "PGRST205") {
     const serviceClient = createServiceRoleClient();
     if (serviceClient) {
-      const assignedRole = isOwnerEmail ? "admin" : "buyer";
       const fullName =
         (user.user_metadata?.full_name as string | undefined) ||
         email.split("@")[0] ||
@@ -82,7 +86,7 @@ export async function getCurrentUserProfile(): Promise<{
             email,
             full_name: fullName,
             phone: (user.user_metadata?.phone as string | undefined) ?? null,
-            role: assignedRole,
+            role: "buyer",
           },
           { onConflict: "id" }
         )
@@ -98,31 +102,11 @@ export async function getCurrentUserProfile(): Promise<{
     }
   }
 
-  // Fallback profile before schema migration if signed in as primary admin email
-  if (isOwnerEmail) {
-    return {
-      user: { id: user.id, email },
-      profile: {
-        id: user.id,
-        email,
-        full_name:
-          (user.user_metadata?.full_name as string | undefined) || "Rendy (Admin)",
-        phone: null,
-        avatar_url: null,
-        role: "admin",
-        bank_name: null,
-        bank_account_number: null,
-        bank_account_holder: null,
-        created_at: new Date().toISOString(),
-      },
-    };
-  }
-
   return {
     user: { id: user.id, email },
     profile: null,
   };
-}
+});
 
 export async function requireAuth(redirectTo = "/login") {
   const { user, profile } = await getCurrentUserProfile();

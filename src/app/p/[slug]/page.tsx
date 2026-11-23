@@ -20,7 +20,7 @@ import { PRODUCT_TYPE_META, ProductTypeIcon } from "@/components/storefront/prod
 import { PixelScripts } from "@/components/marketing/pixel-scripts";
 import { Badge, Card } from "@/components/ui/controls";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 const WEEKDAY_NAMES = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 

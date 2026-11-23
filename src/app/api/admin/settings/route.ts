@@ -1,3 +1,4 @@
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { isSupabaseServerConfigured } from "@/lib/supabase/server";
@@ -25,6 +26,13 @@ const patchSchema = z.object({
   default_affiliate_commission_pct: z.number().min(0).max(90).optional(),
 });
 
+function purgeStorefrontCache() {
+  revalidateTag("storefront", "max");
+  revalidateTag("settings", "max");
+  revalidatePath("/", "layout");
+  revalidatePath("/products");
+}
+
 export async function PUT(request: Request) {
   if (!isSupabaseServerConfigured()) {
     return NextResponse.json({ ok: true, simulated: true });
@@ -48,6 +56,7 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  purgeStorefrontCache();
   return NextResponse.json({ ok: true });
 }
 
@@ -108,5 +117,6 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  purgeStorefrontCache();
   return NextResponse.json({ ok: true, ...parsed.data });
 }

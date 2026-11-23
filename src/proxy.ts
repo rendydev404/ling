@@ -1,6 +1,21 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
+const AUTH_REQUIRED_PREFIXES = [
+  "/admin",
+  "/portal",
+  "/affiliate",
+  "/api/admin",
+  "/api/portal",
+  "/api/affiliate",
+];
+
+function needsAuthRefresh(pathname: string): boolean {
+  return AUTH_REQUIRED_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+}
+
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -12,6 +27,20 @@ export async function proxy(request: NextRequest) {
       path: "/",
       sameSite: "lax",
     });
+  }
+
+  // Fast-path: never make a network round-trip to Supabase Auth on public routes
+  // or when the visitor has no Supabase session cookie.
+  if (!needsAuthRefresh(request.nextUrl.pathname)) {
+    return response;
+  }
+
+  const hasSupabaseCookie = request.cookies
+    .getAll()
+    .some((c) => c.name.startsWith("sb-") && c.name.includes("-auth-token"));
+
+  if (!hasSupabaseCookie) {
+    return response;
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -42,6 +71,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|icon.svg|apple-icon.png|logo.svg|logo.png|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

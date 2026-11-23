@@ -6,7 +6,7 @@ import { ProductCatalogShowcase } from "@/components/storefront/product-catalog-
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { isAffiliateProgramEnabled } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
   const { settings } = await getStorefrontBundle();

@@ -91,11 +91,15 @@ export function BioStorefront({
   }, [products]);
 
   React.useEffect(() => {
-    fetch("/api/analytics/track", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ event_type: "page_view" }),
-    }).catch(() => {});
+    const timer = window.setTimeout(() => {
+      fetch("/api/analytics/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event_type: "page_view" }),
+        keepalive: true,
+      }).catch(() => {});
+    }, 1500);
+    return () => window.clearTimeout(timer);
   }, []);
 
   function trackClick(blockId?: string, productId?: string) {

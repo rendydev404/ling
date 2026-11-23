@@ -1,8 +1,19 @@
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { isSupabaseServerConfigured } from "@/lib/supabase/server";
 import { assertAdminApi } from "@/lib/supabase/auth";
 import { slugify } from "@/lib/utils";
+
+function purgeProductCache(slug?: string) {
+  revalidateTag("storefront", "max");
+  revalidateTag("products", "max");
+  revalidatePath("/");
+  revalidatePath("/products");
+  if (slug) {
+    revalidatePath(`/p/${slug}`);
+  }
+}
 
 const productSchema = z.object({
   id: z.string().uuid().optional(),
@@ -81,6 +92,7 @@ export async function POST(request: Request) {
     );
   }
 
+  purgeProductCache(product.slug);
   return NextResponse.json({ product }, { status: 201 });
 }
 
@@ -123,6 +135,7 @@ export async function PUT(request: Request) {
     });
   }
 
+  purgeProductCache(product.slug);
   return NextResponse.json({ product });
 }
 
@@ -144,5 +157,6 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  purgeProductCache();
   return NextResponse.json({ ok: true });
 }

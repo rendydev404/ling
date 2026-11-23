@@ -1,3 +1,4 @@
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { isSupabaseServerConfigured } from "@/lib/supabase/server";
@@ -66,5 +67,8 @@ export async function PUT(request: Request) {
     }
   }
 
+  revalidateTag("storefront", "max");
+  revalidateTag("blocks", "max");
+  revalidatePath("/");
   return NextResponse.json({ ok: true });
 }
