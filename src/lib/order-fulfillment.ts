@@ -3,6 +3,7 @@ import { mapMidtransStatus } from "@/lib/midtrans";
 import { calculateAffiliateCommission } from "@/lib/checkout-engine";
 import { dispatchOutboundWebhooks } from "@/lib/webhooks";
 import { generateTicketCode } from "@/lib/utils";
+import { sendOrderAccessEmail } from "@/lib/order-access-email";
 import type { PaymentStatus } from "@/types/database";
 
 export interface SyncOrderPaymentParams {
@@ -27,7 +28,7 @@ export async function syncOrderPaymentStatus(params: SyncOrderPaymentParams): Pr
   const { data: order } = await supabase
     .from("orders")
     .select(
-      "id, order_number, buyer_user_id, buyer_name, buyer_email, buyer_phone, voucher_id, affiliate_id, subtotal, discount_amount, total_amount, payment_status, buyer_note"
+      "id, order_number, buyer_user_id, buyer_name, buyer_email, buyer_phone, voucher_id, affiliate_id, subtotal, discount_amount, total_amount, payment_status, payment_method, buyer_note"
     )
     .eq("midtrans_order_id", params.midtransOrderId)
     .single();
@@ -54,16 +55,29 @@ export async function syncOrderPaymentStatus(params: SyncOrderPaymentParams): Pr
     return { found: true, idempotent: true, status: "paid" };
   }
 
-  await supabase
+  if (order.payment_status === nextStatus) {
+    return { found: true, idempotent: true, status: nextStatus };
+  }
+
+  // Compare-and-set on the status we read: when the webhook and the payment-page poll arrive
+  // together, only one of them wins the transition and runs fulfillment below.
+  const { data: transitioned } = await supabase
     .from("orders")
     .update({
       payment_status: nextStatus,
-      payment_method: params.paymentType ?? null,
+      // Keep the specific method chosen at checkout (e.g. "bca_va") over Midtrans' generic type
+      payment_method: order.payment_method ?? params.paymentType ?? null,
       midtrans_raw_payload: params.rawPayload ?? null,
       paid_at: nextStatus === "paid" ? new Date().toISOString() : null,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", order.id);
+    .eq("id", order.id)
+    .eq("payment_status", order.payment_status)
+    .select("id");
+
+  if (!transitioned || transitioned.length === 0) {
+    return { found: true, idempotent: true, status: nextStatus };
+  }
 
   // Release appointment hold if expired / cancelled
   if (nextStatus === "expired" || nextStatus === "cancelled") {
@@ -234,13 +248,20 @@ export async function syncOrderPaymentStatus(params: SyncOrderPaymentParams): Pr
       buyer_email: order.buyer_email,
       buyer_phone: order.buyer_phone,
       total_amount: Number(order.total_amount),
-      payment_method: params.paymentType ?? null,
+      payment_method: order.payment_method ?? params.paymentType ?? null,
       items: (items ?? []).map((i) => ({
         title: i.product_title,
         type: i.product_type,
         price: Number(i.total_price),
       })),
     });
+
+    // Email the buyer their access link (claimed once per order inside)
+    try {
+      await sendOrderAccessEmail(order.id);
+    } catch (err) {
+      console.error("[fulfillment] gagal mengirim email akses:", err);
+    }
   }
 
   return { found: true, status: nextStatus };

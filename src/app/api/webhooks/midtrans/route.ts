@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { verifyMidtransSignature } from "@/lib/midtrans";
+import { isProbeOrderId, verifyMidtransSignature } from "@/lib/midtrans";
 import { syncOrderPaymentStatus } from "@/lib/order-fulfillment";
 
 interface MidtransNotification {
@@ -31,6 +31,11 @@ export async function POST(request: Request) {
 
   if (!isValidSignature) {
     return NextResponse.json({ error: "Invalid Midtrans signature" }, { status: 403 });
+  }
+
+  // Channel-detection probes (PROBE-…) are cancelled test charges with no order behind them
+  if (isProbeOrderId(payload.order_id)) {
+    return NextResponse.json({ ok: true, probe: true });
   }
 
   const result = await syncOrderPaymentStatus({

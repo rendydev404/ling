@@ -168,6 +168,7 @@ create table if not exists public.store_settings (
     "buttonRadius": "md"
   }'::jsonb,
   social_links jsonb not null default '[]'::jsonb,
+  payment_channels jsonb not null default '{}'::jsonb,
   seo_config jsonb not null default '{
     "metaTitle": "Ling Studio — Storefront Resmi",
     "metaDescription": "Produk digital, kursus online, konsultasi 1-on-1, dan event eksklusif.",
@@ -461,6 +462,9 @@ create table if not exists public.orders (
   midtrans_snap_token text,
   midtrans_redirect_url text,
   midtrans_raw_payload jsonb,
+  payment_instructions jsonb,
+  payment_expires_at timestamptz,
+  access_email_sent_at timestamptz,
   shipping_address jsonb,
   shipping_courier text,
   shipping_tracking_number text,

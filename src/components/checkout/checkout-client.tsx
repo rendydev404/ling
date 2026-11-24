@@ -3,7 +3,6 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Script from "next/script";
 import {
   ArrowLeft,
   Check,
@@ -31,22 +30,8 @@ import { Card, CustomSwitch } from "@/components/ui/controls";
 import { useToast } from "@/components/ui/custom-toast";
 import { formatIDR } from "@/lib/utils";
 import { PRODUCT_TYPE_META, ProductTypeIcon } from "@/components/storefront/product-type-meta";
-
-declare global {
-  interface Window {
-    snap?: {
-      pay: (
-        token: string,
-        options: {
-          onSuccess?: () => void;
-          onPending?: () => void;
-          onError?: () => void;
-          onClose?: () => void;
-        }
-      ) => void;
-    };
-  }
-}
+import { PaymentMethodPicker } from "@/components/checkout/payment-method-picker";
+import type { PaymentMethodCode } from "@/lib/payment-methods";
 
 export function CheckoutClient({
   product,
@@ -54,16 +39,14 @@ export function CheckoutClient({
   availability,
   orderBumpProduct,
   settings,
-  snapScriptUrl,
-  midtransClientKey,
+  enabledPaymentMethods,
 }: {
   product: Product;
   variants: ProductVariant[];
   availability: AppointmentAvailability[];
   orderBumpProduct: Product | null;
   settings: StoreSettings;
-  snapScriptUrl: string;
-  midtransClientKey: string;
+  enabledPaymentMethods: PaymentMethodCode[];
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -105,6 +88,10 @@ export function CheckoutClient({
   } | null>(null);
   const [validatingVoucher, setValidatingVoucher] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
+  const [availableMethods, setAvailableMethods] = React.useState(enabledPaymentMethods);
+  const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethodCode | null>(
+    enabledPaymentMethods[0] ?? null
+  );
 
   function handleBookingDateChange(nextDate: string) {
     setBookingDate(nextDate);
@@ -177,6 +164,11 @@ export function CheckoutClient({
       return;
     }
 
+    if (grandTotal > 0 && !paymentMethod) {
+      toast({ type: "error", title: "Pilih metode pembayaran terlebih dahulu" });
+      return;
+    }
+
     setSubmitting(true);
     try {
       const res = await fetch("/api/checkout", {
@@ -211,65 +203,33 @@ export function CheckoutClient({
           bookingEndTime: selectedSlot?.end ?? null,
           donationAnonymous,
           buyerNote: buyerNote || null,
+          paymentMethod: grandTotal > 0 ? paymentMethod : null,
         }),
       });
 
       const json = await res.json();
       if (!res.ok) {
+        if (json.unavailableMethod) {
+          // Midtrans refused this channel: drop it and preselect the next one
+          const remaining = availableMethods.filter((m) => m !== json.unavailableMethod);
+          setAvailableMethods(remaining);
+          setPaymentMethod(remaining[0] ?? null);
+        }
         toast({ type: "error", title: "Checkout gagal", description: json.error });
+        setSubmitting(false);
         return;
       }
 
-      const statusDestination: string = json.orderStatusUrl || `/orders/${json.orderNumber}`;
-      const toInternalPath = (url: string) => {
-        try {
-          const u = new URL(url, window.location.origin);
-          if (u.origin === window.location.origin) {
-            return `${u.pathname}${u.search}`;
-          }
-        } catch {
-          // ignore
-        }
-        return url;
-      };
-
-      if (!json.isSimulated && json.snapToken && window.snap) {
-        const dest = toInternalPath(statusDestination);
-        window.snap.pay(json.snapToken, {
-          onSuccess: () => router.push(dest),
-          onPending: () => router.push(dest),
-          onError: () =>
-            toast({ type: "error", title: "Pembayaran gagal diproses oleh Midtrans" }),
-          onClose: () => router.push(dest),
-        });
-        return;
-      }
-
-      const fallbackUrl: string = json.redirectUrl || statusDestination;
-      if (fallbackUrl.startsWith("http://") || fallbackUrl.startsWith("https://")) {
-        const internal = toInternalPath(fallbackUrl);
-        if (internal !== fallbackUrl) {
-          router.push(internal);
-        } else {
-          window.location.assign(fallbackUrl);
-        }
-      } else {
-        router.push(fallbackUrl);
-      }
-    } finally {
+      // Always land on our own payment page (same origin); the button stays loading meanwhile
+      router.push(`/orders/${encodeURIComponent(json.orderNumber)}`);
+    } catch {
+      toast({ type: "error", title: "Koneksi terputus", description: "Silakan coba lagi." });
       setSubmitting(false);
     }
   }
 
   return (
     <div className="min-h-screen text-[#0f172a]">
-      {midtransClientKey && !midtransClientKey.includes("xxxxxxxx") && (
-        <Script
-          src={snapScriptUrl}
-          data-client-key={midtransClientKey}
-          strategy="afterInteractive"
-        />
-      )}
 
       <header className="sticky top-0 z-20 border-b-2 border-[#0f172a] bg-white">
         <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
@@ -514,6 +474,25 @@ export function CheckoutClient({
                 </div>
               </div>
             )}
+
+            {grandTotal > 0 && (
+              <Card className="p-6 space-y-4">
+                <h2 className="text-base font-extrabold text-[#0f172a]">
+                  {product.type === "donation" ||
+                  product.is_pay_what_you_want ||
+                  product.type === "appointment" ||
+                  product.type === "physical"
+                    ? "3"
+                    : "2"}
+                  . Metode Pembayaran
+                </h2>
+                <PaymentMethodPicker
+                  methods={availableMethods}
+                  value={paymentMethod}
+                  onChange={setPaymentMethod}
+                />
+              </Card>
+            )}
           </div>
 
           {/* Right Order Summary */}
@@ -607,7 +586,7 @@ export function CheckoutClient({
 
               <div className="flex items-center justify-center gap-1.5 text-[11px] font-bold text-[#334155]">
                 <ShieldCheck className="h-4 w-4 text-[#0891b2]" />
-                <span>QRIS · Virtual Account · GoPay · ShopeePay · Kartu Kredit</span>
+                <span>Pembayaran diproses aman oleh Midtrans</span>
               </div>
             </Card>
           </div>

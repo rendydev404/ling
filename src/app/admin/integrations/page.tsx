@@ -1,5 +1,6 @@
 import { getStorefrontBundle } from "@/lib/storefront-data";
-import { getMidtransConfigSummary } from "@/lib/midtrans";
+import { getEnabledPaymentMethods, getMidtransConfigSummary } from "@/lib/midtrans";
+import { getPaymentChannelMap } from "@/lib/payment-channels";
 import { createServerSupabaseClient, isSupabaseServerConfigured } from "@/lib/supabase/server";
 import type { OutboundWebhook } from "@/types/database";
 import { IntegrationsClient } from "@/components/admin/integrations-client";
@@ -7,7 +8,10 @@ import { IntegrationsClient } from "@/components/admin/integrations-client";
 export const dynamic = "force-dynamic";
 
 export default async function AdminIntegrationsPage() {
-  const { settings, isDemoMode } = await getStorefrontBundle();
+  const [{ settings, isDemoMode }, channelMap] = await Promise.all([
+    getStorefrontBundle(),
+    getPaymentChannelMap(),
+  ]);
   const midtransConfig = getMidtransConfigSummary();
   let webhooks: OutboundWebhook[] = [];
 
@@ -27,6 +31,9 @@ export default async function AdminIntegrationsPage() {
       initialWebhooks={webhooks}
       isDemoMode={isDemoMode}
       midtransConfig={midtransConfig}
+      configuredMethods={getEnabledPaymentMethods()}
+      initialChannels={channelMap?.channels ?? {}}
+      initialDetectedAt={channelMap?.detectedAt ?? null}
     />
   );
 }

@@ -7,7 +7,11 @@ import {
   isSupabaseServerConfigured,
 } from "@/lib/supabase/server";
 import { calculateCheckoutPricing } from "@/lib/checkout-engine";
-import { createMidtransSnapTransaction } from "@/lib/midtrans";
+import { createMidtransCoreCharge, MidtransChargeError } from "@/lib/midtrans";
+import { getActivePaymentMethods, markChannelInactive } from "@/lib/payment-channels";
+import { PAYMENT_METHODS, PAYMENT_METHOD_CODES } from "@/lib/payment-methods";
+import { createAccessToken, accessCookieName } from "@/lib/order-access";
+import { syncOrderPaymentStatus } from "@/lib/order-fulfillment";
 import { generateOrderNumber, normalizePhoneID } from "@/lib/utils";
 import type { Product, ProductVariant, ShippingOption, Voucher } from "@/types/database";
 
@@ -37,6 +41,7 @@ const checkoutSchema = z.object({
   bookingEndTime: z.string().nullable().optional(),
   donationAnonymous: z.boolean().optional(),
   buyerNote: z.string().max(500).nullable().optional(),
+  paymentMethod: z.enum(PAYMENT_METHOD_CODES).nullable().optional(),
 });
 
 export async function POST(request: Request) {
@@ -161,6 +166,16 @@ export async function POST(request: Request) {
     shippingCost: selectedCourier?.cost ?? 0,
   });
 
+  const paymentMethod = input.paymentMethod ?? null;
+  if (pricing.totalAmount > 0) {
+    if (!paymentMethod || !(await getActivePaymentMethods()).includes(paymentMethod)) {
+      return NextResponse.json(
+        { error: "Silakan pilih metode pembayaran yang tersedia." },
+        { status: 400 }
+      );
+    }
+  }
+
   const cookieStore = await cookies();
   const refCode = cookieStore.get("ling_ref")?.value;
   let affiliateId: string | null = null;
@@ -190,12 +205,13 @@ export async function POST(request: Request) {
       discount_amount: pricing.discountAmount,
       shipping_cost: pricing.shippingCost,
       total_amount: pricing.totalAmount,
-      payment_status: pricing.totalAmount === 0 ? "paid" : "pending",
+      // Free orders are settled below through the same fulfillment path (access, email, tickets)
+      payment_status: "pending",
       shipping_address: input.shippingAddress ?? null,
       shipping_courier: selectedCourier?.name ?? null,
       shipping_status: product.type === "physical" ? "processing" : "not_applicable",
       buyer_note: input.buyerNote ?? null,
-      paid_at: pricing.totalAmount === 0 ? new Date().toISOString() : null,
+      payment_method: pricing.totalAmount === 0 ? "free" : null,
     })
     .select("id, order_number")
     .single();
@@ -270,15 +286,17 @@ export async function POST(request: Request) {
     }
   }
 
-  if (pricing.totalAmount > 0) {
-    const snapItems = itemsToInsert.map((item) => ({
+  const orderStatusUrl = `${appUrl}/orders/${orderNumber}`;
+
+  if (pricing.totalAmount > 0 && paymentMethod) {
+    const chargeItems = itemsToInsert.map((item) => ({
       id: item.product_id,
       name: item.product_title,
       price: item.unit_price,
       quantity: item.quantity,
     }));
     if (pricing.shippingCost > 0) {
-      snapItems.push({
+      chargeItems.push({
         id: "SHIPPING",
         name: `Ongkos Kirim (${selectedCourier?.name ?? "Kurir"})`,
         price: pricing.shippingCost,
@@ -286,7 +304,7 @@ export async function POST(request: Request) {
       });
     }
     if (pricing.discountAmount > 0) {
-      snapItems.push({
+      chargeItems.push({
         id: "DISCOUNT",
         name: `Diskon Voucher (${voucher?.code ?? "PROMO"})`,
         price: -pricing.discountAmount,
@@ -294,34 +312,42 @@ export async function POST(request: Request) {
       });
     }
 
-    const orderStatusUrl = `${appUrl}/orders/${orderNumber}`;
     try {
-      const snap = await createMidtransSnapTransaction({
+      const charge = await createMidtransCoreCharge({
         orderId: orderNumber,
         grossAmount: pricing.totalAmount,
         customerName: input.buyerName.trim(),
         customerEmail: input.buyerEmail.trim(),
         customerPhone: normalizePhoneID(input.buyerPhone),
-        items: snapItems,
-        finishRedirectUrl: orderStatusUrl,
+        items: chargeItems,
+        paymentMethod,
+        callbackUrl: orderStatusUrl,
       });
 
-      await serviceClient
+      const { error: saveErr } = await serviceClient
         .from("orders")
         .update({
-          midtrans_snap_token: snap.token,
-          midtrans_redirect_url: snap.redirect_url,
+          payment_method: paymentMethod,
+          payment_instructions: charge.instructions,
+          payment_expires_at: charge.instructions.expiresAt,
+          midtrans_raw_payload: charge.raw,
         })
         .eq("id", order.id);
 
-      return NextResponse.json({
-        orderNumber,
-        totalAmount: pricing.totalAmount,
-        snapToken: snap.token,
-        redirectUrl: snap.redirect_url,
-        orderStatusUrl,
-        isSimulated: snap.isSimulated,
-      });
+      if (saveErr) {
+        // Charge already exists at Midtrans; the order page can still recover via status API
+        console.error("[checkout] gagal menyimpan instruksi pembayaran:", saveErr.message);
+      }
+
+      return withAccessCookie(
+        NextResponse.json({
+          orderNumber,
+          totalAmount: pricing.totalAmount,
+          orderStatusUrl,
+          isSimulated: charge.isSimulated,
+        }),
+        orderNumber
+      );
     } catch (err) {
       await Promise.all([
         serviceClient.from("orders").update({ payment_status: "cancelled" }).eq("id", order.id),
@@ -332,24 +358,56 @@ export async function POST(request: Request) {
               .eq("order_id", order.id)
           : Promise.resolve(),
       ]);
+
+      if (err instanceof MidtransChargeError && err.isChannelUnavailable) {
+        // Learn it: hide this channel from checkout until the next detection says otherwise
+        await markChannelInactive(paymentMethod, err.statusMessage);
+        return NextResponse.json(
+          {
+            error: `${PAYMENT_METHODS[paymentMethod].label} sedang tidak tersedia. Silakan pilih metode pembayaran lain.`,
+            unavailableMethod: paymentMethod,
+          },
+          { status: 409 }
+        );
+      }
+
+      console.error("[checkout] charge Midtrans gagal:", err);
       return NextResponse.json(
-        {
-          error:
-            err instanceof Error
-              ? err.message
-              : "Gagal membuat transaksi Midtrans Snap.",
-        },
+        { error: "Pembayaran belum bisa dibuat. Coba lagi atau pilih metode lain." },
         { status: 502 }
       );
     }
   }
 
-  return NextResponse.json({
-    orderNumber,
-    totalAmount: 0,
-    snapToken: null,
-    redirectUrl: `${appUrl}/orders/${orderNumber}`,
-    orderStatusUrl: `${appUrl}/orders/${orderNumber}`,
-    isSimulated: false,
+  // Free order (100% voucher, free product): settle through the normal fulfillment path
+  await syncOrderPaymentStatus({
+    midtransOrderId: orderNumber,
+    transactionStatus: "settlement",
+    paymentType: "free",
   });
+
+  return withAccessCookie(
+    NextResponse.json({
+      orderNumber,
+      totalAmount: 0,
+      orderStatusUrl,
+      isSimulated: false,
+    }),
+    orderNumber
+  );
+}
+
+/** Lets this browser open the product access page from the order page right after paying. */
+function withAccessCookie(res: NextResponse, orderNumber: string) {
+  const token = createAccessToken(orderNumber);
+  if (token) {
+    res.cookies.set(accessCookieName(orderNumber), token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30,
+    });
+  }
+  return res;
 }

@@ -3,6 +3,8 @@
 import * as React from "react";
 import { Copy, CreditCard, Plus, Radio, Save, Send, ShieldCheck, Trash2 } from "lucide-react";
 import type { MidtransConfigSummary } from "@/lib/midtrans";
+import type { ChannelState } from "@/lib/payment-channels";
+import { PAYMENT_METHODS, type PaymentMethodCode } from "@/lib/payment-methods";
 import type { OutboundWebhook, StoreSettings } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,13 +17,41 @@ export function IntegrationsClient({
   initialWebhooks,
   isDemoMode,
   midtransConfig,
+  configuredMethods,
+  initialChannels,
+  initialDetectedAt,
 }: {
   initialSettings: StoreSettings;
   initialWebhooks: OutboundWebhook[];
   isDemoMode: boolean;
   midtransConfig: MidtransConfigSummary;
+  configuredMethods: PaymentMethodCode[];
+  initialChannels: Partial<Record<PaymentMethodCode, ChannelState>>;
+  initialDetectedAt: string | null;
 }) {
   const { toast } = useToast();
+  const [channels, setChannels] = React.useState(initialChannels);
+  const [detectedAt, setDetectedAt] = React.useState(initialDetectedAt);
+  const [detecting, setDetecting] = React.useState(false);
+
+  async function detectChannels() {
+    setDetecting(true);
+    try {
+      const res = await fetch("/api/admin/payment-methods/detect", { method: "POST" });
+      const json = await res.json();
+      if (!res.ok) {
+        toast({ type: "error", title: "Deteksi gagal", description: json.error });
+        return;
+      }
+      setChannels(json.channels ?? {});
+      setDetectedAt(json.detectedAt ?? null);
+      toast({ type: "success", title: "Metode pembayaran aktif diperbarui" });
+    } catch {
+      toast({ type: "error", title: "Deteksi gagal", description: "Koneksi terputus." });
+    } finally {
+      setDetecting(false);
+    }
+  }
   const [settings, setSettings] = React.useState(initialSettings);
   const [webhooks, setWebhooks] = React.useState(initialWebhooks);
   const [savingPixels, setSavingPixels] = React.useState(false);
@@ -152,7 +182,7 @@ export function IntegrationsClient({
                 </Badge>
               </div>
               <p className="text-xs font-medium text-[#475569]">
-                QRIS, Virtual Account, E-Wallet & Kartu Kredit via Midtrans Snap + verifikasi SHA-512 Signature Key.
+                QRIS, Virtual Account & E-Wallet via Midtrans Core API (UI pembayaran sendiri) + verifikasi SHA-512 Signature Key.
               </p>
             </div>
           </div>
@@ -200,6 +230,55 @@ export function IntegrationsClient({
             <Copy className="h-3.5 w-3.5" />
             Salin URL
           </Button>
+        </div>
+
+        <div className="space-y-3 border-t-2 border-[#0f172a] pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#0f172a]">
+                Metode Pembayaran Aktif (Deteksi Otomatis)
+              </h3>
+              <p className="text-[11px] font-medium text-[#475569]">
+                {detectedAt
+                  ? `Terakhir dicek ${new Date(detectedAt).toLocaleString("id-ID")}. Metode nonaktif otomatis disembunyikan dari checkout.`
+                  : "Belum pernah dicek. Pengecekan berjalan otomatis saat checkout pertama dibuka."}
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={detectChannels}
+              isLoading={detecting}
+              disabled={!midtransConfig.isConfigured || isDemoMode}
+            >
+              <Radio className="h-3.5 w-3.5" />
+              Cek Ulang
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {configuredMethods.map((code) => {
+              const state = channels[code];
+              return (
+                <div
+                  key={code}
+                  title={state?.reason}
+                  className="flex items-center justify-between gap-2 rounded-xl border-2 border-[#0f172a] bg-white px-3 py-2 shadow-[2px_2px_0px_#0f172a]"
+                >
+                  <span className="truncate text-xs font-extrabold text-[#0f172a]">
+                    {PAYMENT_METHODS[code].label}
+                  </span>
+                  <Badge variant={state ? (state.active ? "success" : "danger") : "warning"}>
+                    {state ? (state.active ? "AKTIF" : "NONAKTIF") : "BELUM DICEK"}
+                  </Badge>
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-[11px] font-medium text-[#475569]">
+            Midtrans tidak menyediakan API daftar channel, jadi pengecekan memakai transaksi uji Rp10.000
+            berawalan PROBE- yang langsung dibatalkan (tidak ada dana terpotong).
+          </p>
         </div>
       </Card>
 

@@ -1,3 +1,5 @@
+import type { PaymentInstructions } from "@/lib/payment-methods";
+
 export type UserRole = "admin" | "buyer" | "affiliate";
 
 export type ProductType =
@@ -308,6 +310,9 @@ export interface Order {
   payment_method: string | null;
   midtrans_snap_token: string | null;
   midtrans_redirect_url: string | null;
+  payment_instructions: PaymentInstructions | null;
+  payment_expires_at: string | null;
+  access_email_sent_at: string | null;
   shipping_address: Record<string, string> | null;
   shipping_courier: string | null;
   shipping_tracking_number: string | null;
