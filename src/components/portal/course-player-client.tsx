@@ -77,11 +77,11 @@ export function CoursePlayerClient({
       <header className="sticky top-0 z-20 border-b-2 border-[#0f172a] bg-white">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
           <Link
-            href="/portal"
+            href="/member/kelas"
             className="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#0f172a] bg-white px-2.5 py-1 text-xs font-extrabold text-[#0f172a] shadow-[2px_2px_0px_#0f172a] hover:bg-[#ecfeff]"
           >
             <ArrowLeft className="h-4 w-4" />
-            Buyer Portal
+            Member Area
           </Link>
           <div className="flex items-center gap-3">
             <span className="text-xs font-extrabold text-[#0f172a]">Progres: {progressPct}%</span>

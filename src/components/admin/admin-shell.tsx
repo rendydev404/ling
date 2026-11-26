@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
+  BookOpen,
   ExternalLink,
   Grid2x2,
   Layers,
@@ -24,6 +25,7 @@ import { BrandLogo } from "@/components/ui/brand-logo";
 const ALL_NAV_ITEMS = [
   { href: "/admin", label: "Ringkasan", shortLabel: "Home", icon: LayoutDashboard, exact: true },
   { href: "/admin/products", label: "Produk & Layanan", shortLabel: "Produk", icon: Package },
+  { href: "/admin/ebooks", label: "Ebook & Reader", shortLabel: "Ebook", icon: BookOpen },
   { href: "/admin/orders", label: "Pesanan & Pengiriman", shortLabel: "Pesanan", icon: ShoppingCart },
   { href: "/admin/builder", label: "Page Builder & Tema", shortLabel: "Builder", icon: Layers },
   { href: "/admin/vouchers", label: "Voucher & Kupon", shortLabel: "Voucher", icon: Tag },

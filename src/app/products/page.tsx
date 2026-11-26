@@ -43,7 +43,7 @@ export default async function CustomerProductsPage() {
 
           <nav className="flex items-center gap-2">
             <Link
-              href="/portal"
+              href="/member"
               className="inline-flex h-9 items-center gap-1.5 rounded-xl border-2 border-[#0f172a] bg-white px-3 text-xs font-black text-[#0f172a] shadow-[2px_2px_0px_#0f172a] hover:bg-[#ecfeff]"
             >
               <ShoppingBag className="h-3.5 w-3.5" />

@@ -49,7 +49,7 @@ export async function sendOrderAccessEmail(orderId: string): Promise<void> {
 
   const brand = (settingsRes.data?.brand_name as string | undefined) || "Ling";
   const items = itemsRes.data ?? [];
-  const accessUrl = buildAccessUrl(claimed.order_number) ?? `${getAppUrl()}/portal`;
+  const accessUrl = buildAccessUrl(claimed.order_number) ?? `${getAppUrl()}/member`;
   const email = renderAccessEmail({
     brand,
     orderNumber: claimed.order_number,

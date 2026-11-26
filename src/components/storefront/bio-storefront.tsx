@@ -157,7 +157,7 @@ export function BioStorefront({
               <span>Katalog</span>
             </Link>
             <Link
-              href="/portal"
+              href="/member"
               className="inline-flex h-9 items-center gap-1.5 rounded-xl border-2 px-3 text-xs font-black shadow-[2px_2px_0px_#0f172a] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5"
               style={{
                 backgroundColor: theme.surfaceColor,

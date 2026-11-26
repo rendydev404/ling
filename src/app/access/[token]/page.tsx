@@ -31,10 +31,10 @@ export default async function AccessPage({ params }: { params: Promise<{ token: 
             selesai.
           </p>
           <Link
-            href="/portal"
+            href="/member"
             className="mt-5 inline-block text-xs font-extrabold text-[#0f172a] underline decoration-2 underline-offset-4"
           >
-            Buka Buyer Portal
+            Buka Member Area
           </Link>
         </Card>
       </div>

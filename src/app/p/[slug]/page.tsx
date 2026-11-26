@@ -66,10 +66,10 @@ export default async function ProductDetailPage({
             @{settings.handle}
           </Link>
           <Link
-            href="/portal"
+            href="/member"
             className="rounded-lg border-2 border-[#0f172a] bg-[#a855f7] px-3 py-1 text-xs font-extrabold text-white shadow-[2px_2px_0px_#0f172a] hover:bg-[#9333ea]"
           >
-            Buyer Portal
+            Member Area
           </Link>
         </div>
       </header>
@@ -161,7 +161,7 @@ export default async function ProductDetailPage({
                 <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5 text-[#0f172a]" />
                 <p>
                   {product.metadata.delivery_note ||
-                    "File digital & tautan akses langsung terbuka di Buyer Portal segera setelah pembayaran Midtrans terkonfirmasi."}
+                    "File digital & tautan akses langsung terbuka di Member Area segera setelah pembayaran Midtrans terkonfirmasi."}
                 </p>
               </div>
             </Card>

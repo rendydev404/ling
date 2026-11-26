@@ -15,6 +15,8 @@ export interface AccessItem {
   type: ProductType;
   courseSlug?: string | null;
   assets: AccessAsset[];
+  /** Ebooks unlocked by this product, read in the Member Area reader. */
+  ebooks: Array<{ id: string; title: string }>;
   deliveryNote?: string | null;
   booking?: { date: string; start: string; end: string; meetingLink: string | null; status: string } | null;
   tickets: Array<{ code: string; status: string }>;
@@ -63,7 +65,11 @@ export async function loadOrderAccess(token: string): Promise<OrderAccessData | 
   const digitalIds = rows.filter((r) => r.product_type === "digital").map((r) => r.product_id);
   const has = (t: ProductType) => rows.some((r) => r.product_type === t);
 
-  const [productsRes, assetsRes, bookingsRes, ticketsRes, membershipsRes] = await Promise.all([
+  const ebookProductIds = rows
+    .filter((r) => r.product_type === "digital" || r.product_type === "membership")
+    .map((r) => r.product_id);
+
+  const [productsRes, assetsRes, bookingsRes, ticketsRes, membershipsRes, ebooksRes] = await Promise.all([
     productIds.length
       ? supabase.from("products").select("id, slug, metadata").in("id", productIds)
       : Promise.resolve({ data: [] as Array<{ id: string; slug: string; metadata: Meta }> }),
@@ -89,7 +95,24 @@ export async function loadOrderAccess(token: string): Promise<OrderAccessData | 
           .select("product_id, status, expires_at")
           .eq("order_id", order.id)
       : Promise.resolve({ data: [] as Array<Record<string, unknown>> }),
+    ebookProductIds.length
+      ? supabase
+          .from("product_ebooks")
+          .select("product_id, sort_order, ebooks!inner(id, title, status)")
+          .in("product_id", ebookProductIds)
+          .eq("ebooks.status", "published")
+          .order("sort_order", { ascending: true })
+      : Promise.resolve({ data: [] as Array<Record<string, unknown>> }),
   ]);
+
+  const ebooksByProduct = new Map<string, Array<{ id: string; title: string }>>();
+  for (const row of (ebooksRes.data ?? []) as Array<Record<string, unknown>>) {
+    const eb = (Array.isArray(row.ebooks) ? row.ebooks[0] : row.ebooks) as { id: string; title: string } | null;
+    if (!eb) continue;
+    const list = ebooksByProduct.get(String(row.product_id)) ?? [];
+    list.push({ id: eb.id, title: eb.title });
+    ebooksByProduct.set(String(row.product_id), list);
+  }
 
   const products = new Map(
     ((productsRes.data ?? []) as Array<{ id: string; slug: string; metadata: Meta | null }>).map(
@@ -105,6 +128,7 @@ export async function loadOrderAccess(token: string): Promise<OrderAccessData | 
       title: row.product_title,
       type: row.product_type,
       assets: [],
+      ebooks: ebooksByProduct.get(row.product_id) ?? [],
       tickets: [],
     };
 

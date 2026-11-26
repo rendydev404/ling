@@ -638,7 +638,7 @@ export function ProductsManager({
                 label="Catatan Pengiriman Pasca-Bayar"
                 value={form.delivery_note}
                 onChange={(e) => setForm({ ...form, delivery_note: e.target.value })}
-                placeholder="Link file langsung muncul di Buyer Portal..."
+                placeholder="Link file langsung muncul di Member Area..."
               />
             </div>
           )}

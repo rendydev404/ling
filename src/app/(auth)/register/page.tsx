@@ -59,7 +59,7 @@ export default function RegisterPage() {
         title: "Akun berhasil dibuat",
         description: "Silakan lanjut ke dashboard Anda.",
       });
-      router.push(role === "affiliate" ? "/affiliate" : "/portal");
+      router.push(role === "affiliate" ? "/affiliate" : "/member");
       router.refresh();
     } finally {
       setLoading(false);

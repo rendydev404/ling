@@ -48,7 +48,7 @@ function LoginForm() {
 
       toast({ type: "success", title: "Berhasil masuk" });
       const target =
-        explicitNext || (normalized === "rendyakun50@gmail.com" ? "/admin" : "/portal");
+        explicitNext || (normalized === "rendyakun50@gmail.com" ? "/admin" : "/member");
       router.push(target);
       router.refresh();
     } finally {

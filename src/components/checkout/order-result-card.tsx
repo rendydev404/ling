@@ -103,7 +103,7 @@ export function OrderResultCard(props: OrderResultCardProps) {
                 <span className="font-extrabold [overflow-wrap:anywhere]">
                   {props.buyerEmail || "email kamu"}
                 </span>
-                . Kamu juga bisa membuka produk kapan saja lewat Buyer Portal.
+                . Kamu juga bisa membuka produk kapan saja lewat Member Area.
               </p>
             </div>
           )}
@@ -189,14 +189,14 @@ export function OrderResultCard(props: OrderResultCardProps) {
             )}
             {kind !== "failed" && (
               <Link
-                href="/portal"
+                href="/member"
                 className={`${PRIMARY_BTN} ${
                   kind === "paid" && props.accessUrl
                     ? "bg-white text-[#0f172a] hover:bg-[#f3e8ff]"
                     : "bg-[#a855f7] text-white hover:bg-[#9333ea]"
                 }`}
               >
-                Buka Buyer Portal
+                Buka Member Area
                 {!(kind === "paid" && props.accessUrl) && <ArrowRight className="h-4 w-4" />}
               </Link>
             )}

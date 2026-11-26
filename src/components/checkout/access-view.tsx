@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   ArrowRight,
+  BookOpen,
   CalendarClock,
   Download,
   ExternalLink,
@@ -24,6 +25,29 @@ const SHIPPING_LABEL: Record<string, string> = {
   delivered: "Sudah diterima",
 };
 
+function EbookAccess({ item }: { item: AccessItem }) {
+  if (item.ebooks.length === 0) return null;
+  return (
+    <div className="space-y-2.5 rounded-xl border-2 border-[#0f172a] bg-[#ecfeff] p-3">
+      <p className="flex items-center gap-2 text-xs font-extrabold text-[#0f172a]">
+        <BookOpen className="h-4 w-4" /> {item.ebooks.length} ebook siap dibaca di Member Area
+      </p>
+      <ul className="space-y-0.5 text-xs font-bold text-[#334155]">
+        {item.ebooks.slice(0, 5).map((e) => (
+          <li key={e.id} className="truncate">• {e.title}</li>
+        ))}
+        {item.ebooks.length > 5 && <li>+{item.ebooks.length - 5} lainnya</li>}
+      </ul>
+      <p className="text-[11px] font-medium text-[#475569]">
+        Masuk atau daftar dengan email pembelian ini. Ebook dibaca langsung di browser dan progresnya tersimpan.
+      </p>
+      <Link href="/member/ebooks" className={`${BTN} bg-[#a855f7] text-white hover:bg-[#9333ea]`}>
+        Baca Ebook <ArrowRight className="h-4 w-4" />
+      </Link>
+    </div>
+  );
+}
+
 function ItemBody({ item, token }: { item: AccessItem; token: string }) {
   const dl = (id: string) => `/api/access/${encodeURIComponent(token)}/download/${id}`;
 
@@ -31,7 +55,8 @@ function ItemBody({ item, token }: { item: AccessItem; token: string }) {
     case "digital":
       return (
         <div className="space-y-2">
-          {item.assets.length === 0 && (
+          <EbookAccess item={item} />
+          {item.assets.length === 0 && item.ebooks.length === 0 && (
             <p className="text-xs font-medium text-[#475569]">
               {item.deliveryNote || "File sedang disiapkan kreator. Kami kabari lewat email setelah siap."}
             </p>
@@ -75,7 +100,7 @@ function ItemBody({ item, token }: { item: AccessItem; token: string }) {
             Masuk atau daftar dengan email pembelian ini untuk mulai belajar dan menyimpan progres.
           </p>
           <Link
-            href={item.courseSlug ? `/portal/course/${item.courseSlug}` : "/portal"}
+            href={item.courseSlug ? `/portal/course/${item.courseSlug}` : "/member"}
             className={`${BTN} bg-[#a855f7] text-white hover:bg-[#9333ea]`}
           >
             Mulai Belajar <ArrowRight className="h-4 w-4" />
@@ -154,6 +179,7 @@ function ItemBody({ item, token }: { item: AccessItem; token: string }) {
     case "membership":
       return (
         <div className="space-y-2.5">
+          <EbookAccess item={item} />
           {item.membership?.expiresAt && (
             <p className="text-xs font-bold text-[#0f172a]">
               Aktif sampai {formatDateTimeID(item.membership.expiresAt)}
@@ -170,7 +196,7 @@ function ItemBody({ item, token }: { item: AccessItem; token: string }) {
             </a>
           ) : (
             <p className="text-xs font-medium text-[#475569]">
-              Konten member bisa dibuka lewat Buyer Portal.
+              Konten member bisa dibuka lewat Member Area.
             </p>
           )}
         </div>
@@ -240,8 +266,8 @@ export function AccessView({ data, token }: { data: OrderAccessData; token: stri
           Mau semua pembelian tersimpan di satu tempat? Daftar dengan email{" "}
           <span className="font-extrabold text-[#0f172a] break-all">{data.buyerEmail}</span>, pesanan ini
           otomatis masuk ke{" "}
-          <Link href="/portal" className="font-extrabold text-[#7e22ce] underline underline-offset-2">
-            Buyer Portal
+          <Link href="/member" className="font-extrabold text-[#7e22ce] underline underline-offset-2">
+            Member Area
           </Link>
           .
         </Card>

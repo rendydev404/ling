@@ -108,10 +108,10 @@ export function AffiliateDashboardClient({
           <div className="flex items-center gap-2.5">
             <Badge variant="success">Kode: {affiliate.referral_code}</Badge>
             <Link
-              href="/portal"
+              href="/member"
               className="rounded-lg border-2 border-[#0f172a] bg-[#a855f7] px-3 py-1 text-xs font-extrabold text-white shadow-[2px_2px_0px_#0f172a] hover:bg-[#9333ea]"
             >
-              Buyer Portal
+              Member Area
             </Link>
           </div>
         </div>

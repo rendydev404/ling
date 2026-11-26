@@ -83,7 +83,7 @@ export function CustomTabs({
             aria-selected={isActive}
             onClick={() => onChange(tab.id)}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-extrabold transition-all cursor-pointer",
+              "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3.5 py-2 text-xs font-extrabold transition-all cursor-pointer",
               isActive
                 ? "border-2 border-[#0f172a] bg-[#22d3ee] text-[#0f172a] shadow-[2px_2px_0px_#0f172a]"
                 : "border-2 border-transparent text-[#334155] hover:bg-[#f3e8ff] hover:text-[#0f172a]"

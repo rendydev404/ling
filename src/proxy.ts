@@ -4,9 +4,11 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 const AUTH_REQUIRED_PREFIXES = [
   "/admin",
   "/portal",
+  "/member",
   "/affiliate",
   "/api/admin",
   "/api/portal",
+  "/api/member",
   "/api/affiliate",
 ];
 
