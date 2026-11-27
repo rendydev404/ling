@@ -6,6 +6,7 @@ import {
   createServiceRoleClient,
   isSupabaseServerConfigured,
 } from "@/lib/supabase/server";
+import { getStoreSettings } from "@/lib/storefront-data";
 import { calculateCheckoutPricing } from "@/lib/checkout-engine";
 import { createMidtransCoreCharge, MidtransChargeError } from "@/lib/midtrans";
 import { getActivePaymentMethods, markChannelInactive } from "@/lib/payment-channels";
@@ -73,12 +74,20 @@ export async function POST(request: Request) {
   const orderNumber = generateOrderNumber();
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/+$/, "");
 
-  const userClient = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await userClient.auth.getUser();
+  const cookieStore = await cookies();
+  const hasAuthCookie = cookieStore
+    .getAll()
+    .some((c) => c.name.startsWith("sb-") && c.name.includes("-auth-token"));
+  const refCode = cookieStore.get("ling_ref")?.value;
 
-  const [productRes, settingsRes] = await Promise.all([
+  // Execute all upfront lookups in a single parallel round-trip
+  const [user, productRes, { settings }, activeMethods, voucherRes, affRes] = await Promise.all([
+    hasAuthCookie
+      ? createServerSupabaseClient()
+          .then((c) => c.auth.getUser())
+          .then((r) => r.data.user)
+          .catch(() => null)
+      : Promise.resolve(null),
     serviceClient
       .from("products")
       .select(
@@ -87,11 +96,25 @@ export async function POST(request: Request) {
       .eq("slug", input.productSlug)
       .eq("status", "published")
       .single(),
-    serviceClient
-      .from("store_settings")
-      .select("shipping_options")
-      .eq("singleton_key", "primary")
-      .single(),
+    getStoreSettings(),
+    getActivePaymentMethods(),
+    input.voucherCode
+      ? serviceClient
+          .from("vouchers")
+          .select(
+            "id, code, discount_type, discount_value, max_discount_amount, min_order_amount, max_uses, used_count, applicable_product_id, starts_at, expires_at, is_active, created_at"
+          )
+          .ilike("code", input.voucherCode.trim().toUpperCase())
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    refCode
+      ? serviceClient
+          .from("affiliates")
+          .select("id")
+          .ilike("referral_code", refCode)
+          .eq("status", "active")
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
 
   if (productRes.error?.code === "PGRST205") {
@@ -120,39 +143,35 @@ export async function POST(request: Request) {
     );
   }
 
-  const [variantRes, bumpRes, voucherRes] = await Promise.all([
-    input.variantId
-      ? serviceClient
-          .from("product_variants")
-          .select("id, name, price_override, stock_quantity")
-          .eq("id", input.variantId)
-          .eq("product_id", product.id)
-          .single()
-      : Promise.resolve({ data: null }),
-    input.includeOrderBump && product.order_bump_product_id
-      ? serviceClient
-          .from("products")
-          .select("id, title, type, price")
-          .eq("id", product.order_bump_product_id)
-          .eq("status", "published")
-          .single()
-      : Promise.resolve({ data: null }),
-    input.voucherCode
-      ? serviceClient
-          .from("vouchers")
-          .select(
-            "id, code, discount_type, discount_value, max_discount_amount, min_order_amount, max_uses, used_count, applicable_product_id, starts_at, expires_at, is_active, created_at"
-          )
-          .ilike("code", input.voucherCode.trim().toUpperCase())
-          .single()
-      : Promise.resolve({ data: null }),
-  ]);
+  const needsSecondaryLookup =
+    Boolean(input.variantId) || Boolean(input.includeOrderBump && product.order_bump_product_id);
+
+  const [variantRes, bumpRes] = needsSecondaryLookup
+    ? await Promise.all([
+        input.variantId
+          ? serviceClient
+              .from("product_variants")
+              .select("id, name, price_override, stock_quantity")
+              .eq("id", input.variantId)
+              .eq("product_id", product.id)
+              .single()
+          : Promise.resolve({ data: null }),
+        input.includeOrderBump && product.order_bump_product_id
+          ? serviceClient
+              .from("products")
+              .select("id, title, type, price")
+              .eq("id", product.order_bump_product_id)
+              .eq("status", "published")
+              .single()
+          : Promise.resolve({ data: null }),
+      ])
+    : [{ data: null }, { data: null }];
 
   const variant = variantRes.data as ProductVariant | null;
   const bumpProduct = bumpRes.data as Product | null;
-  const voucher = voucherRes.data as Voucher | null;
+  const voucher = (voucherRes.data as Voucher | null) ?? null;
 
-  const shippingOptions = (settingsRes.data?.shipping_options as ShippingOption[] | null) ?? [];
+  const shippingOptions = (settings.shipping_options as ShippingOption[] | null) ?? [];
   const selectedCourier = shippingOptions.find((o) => o.code === input.shippingCourierCode);
 
   const pricing = calculateCheckoutPricing({
@@ -168,7 +187,7 @@ export async function POST(request: Request) {
 
   const paymentMethod = input.paymentMethod ?? null;
   if (pricing.totalAmount > 0) {
-    if (!paymentMethod || !(await getActivePaymentMethods()).includes(paymentMethod)) {
+    if (!paymentMethod || !activeMethods.includes(paymentMethod)) {
       return NextResponse.json(
         { error: "Silakan pilih metode pembayaran yang tersedia." },
         { status: 400 }
@@ -176,18 +195,7 @@ export async function POST(request: Request) {
     }
   }
 
-  const cookieStore = await cookies();
-  const refCode = cookieStore.get("ling_ref")?.value;
-  let affiliateId: string | null = null;
-  if (refCode && product.affiliate_enabled) {
-    const { data: aff } = await serviceClient
-      .from("affiliates")
-      .select("id")
-      .ilike("referral_code", refCode)
-      .eq("status", "active")
-      .single();
-    affiliateId = aff?.id ?? null;
-  }
+  const affiliateId = product.affiliate_enabled ? (affRes.data?.id ?? null) : null;
 
   const { data: order, error: orderErr } = await serviceClient
     .from("orders")
@@ -259,23 +267,24 @@ export async function POST(request: Request) {
     });
   }
 
-  await serviceClient.from("order_items").insert(itemsToInsert);
-
   if (product.type === "appointment" && input.bookingDate && input.bookingStartTime) {
-    const { error: bookErr } = await serviceClient.from("appointment_bookings").insert({
-      order_id: order.id,
-      product_id: product.id,
-      buyer_user_id: user?.id ?? null,
-      buyer_name: input.buyerName.trim(),
-      buyer_email: input.buyerEmail.trim().toLowerCase(),
-      buyer_phone: normalizePhoneID(input.buyerPhone),
-      booking_date: input.bookingDate,
-      start_time: input.bookingStartTime,
-      end_time: input.bookingEndTime || input.bookingStartTime,
-      meeting_link: product.metadata.meeting_link ?? null,
-      notes: input.buyerNote ?? null,
-      status: pricing.totalAmount === 0 ? "confirmed" : "pending_payment",
-    });
+    const [, { error: bookErr }] = await Promise.all([
+      serviceClient.from("order_items").insert(itemsToInsert),
+      serviceClient.from("appointment_bookings").insert({
+        order_id: order.id,
+        product_id: product.id,
+        buyer_user_id: user?.id ?? null,
+        buyer_name: input.buyerName.trim(),
+        buyer_email: input.buyerEmail.trim().toLowerCase(),
+        buyer_phone: normalizePhoneID(input.buyerPhone),
+        booking_date: input.bookingDate,
+        start_time: input.bookingStartTime,
+        end_time: input.bookingEndTime || input.bookingStartTime,
+        meeting_link: product.metadata.meeting_link ?? null,
+        notes: input.buyerNote ?? null,
+        status: pricing.totalAmount === 0 ? "confirmed" : "pending_payment",
+      }),
+    ]);
 
     if (bookErr) {
       await serviceClient.from("orders").update({ payment_status: "cancelled" }).eq("id", order.id);
@@ -284,6 +293,8 @@ export async function POST(request: Request) {
         { status: 409 }
       );
     }
+  } else if (pricing.totalAmount === 0 || !paymentMethod) {
+    await serviceClient.from("order_items").insert(itemsToInsert);
   }
 
   const orderStatusUrl = `${appUrl}/orders/${orderNumber}`;
@@ -313,16 +324,22 @@ export async function POST(request: Request) {
     }
 
     try {
-      const charge = await createMidtransCoreCharge({
-        orderId: orderNumber,
-        grossAmount: pricing.totalAmount,
-        customerName: input.buyerName.trim(),
-        customerEmail: input.buyerEmail.trim(),
-        customerPhone: normalizePhoneID(input.buyerPhone),
-        items: chargeItems,
-        paymentMethod,
-        callbackUrl: orderStatusUrl,
-      });
+      // Run order_items insert in parallel with Midtrans charge for non-appointment orders
+      const [charge] = await Promise.all([
+        createMidtransCoreCharge({
+          orderId: orderNumber,
+          grossAmount: pricing.totalAmount,
+          customerName: input.buyerName.trim(),
+          customerEmail: input.buyerEmail.trim(),
+          customerPhone: normalizePhoneID(input.buyerPhone),
+          items: chargeItems,
+          paymentMethod,
+          callbackUrl: orderStatusUrl,
+        }),
+        product.type !== "appointment"
+          ? serviceClient.from("order_items").insert(itemsToInsert)
+          : Promise.resolve(),
+      ]);
 
       const { error: saveErr } = await serviceClient
         .from("orders")

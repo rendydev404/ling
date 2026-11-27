@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { revalidateTag, unstable_cache } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import {
   getEnabledPaymentMethods,
@@ -52,8 +53,7 @@ function serialize(map: PaymentChannelMap): Record<string, unknown> {
   };
 }
 
-/** One small single-column read, deduped per request. null = column/DB unavailable. */
-export const getPaymentChannelMap = cache(async (): Promise<PaymentChannelMap | null> => {
+async function fetchPaymentChannelMapDirect(): Promise<PaymentChannelMap | null> {
   const supabase = createServiceRoleClient();
   if (!supabase) return null;
   const { data, error } = await supabase
@@ -63,6 +63,17 @@ export const getPaymentChannelMap = cache(async (): Promise<PaymentChannelMap | 
     .maybeSingle();
   if (error) return null;
   return parseMap(data?.payment_channels);
+}
+
+const fetchCachedPaymentChannelMap = unstable_cache(
+  fetchPaymentChannelMapDirect,
+  ["payment-channels-v1"],
+  { revalidate: 600, tags: ["payment-channels", "settings"] }
+);
+
+/** Cached cross-request & deduped per request. null = column/DB unavailable. */
+export const getPaymentChannelMap = cache(async (): Promise<PaymentChannelMap | null> => {
+  return fetchCachedPaymentChannelMap();
 });
 
 async function writeMap(map: PaymentChannelMap) {
@@ -72,6 +83,7 @@ async function writeMap(map: PaymentChannelMap) {
     .from("store_settings")
     .update({ payment_channels: serialize(map) })
     .eq("singleton_key", "primary");
+  revalidateTag("payment-channels", "max");
 }
 
 /** Methods to offer at checkout: env allow-list minus channels Midtrans reported as inactive. */
@@ -115,7 +127,7 @@ export async function markChannelInactive(method: PaymentMethodCode, reason: str
 /** Probes every allowed method against Midtrans and stores the result. */
 export async function detectPaymentChannels(): Promise<PaymentChannelMap | null> {
   if (!isMidtransConfigured()) return null;
-  const current = await getPaymentChannelMap();
+  const current = await fetchPaymentChannelMapDirect();
   if (!current) return null;
 
   const startedAt = new Date().toISOString();

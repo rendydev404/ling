@@ -9,17 +9,19 @@ import type { Affiliate } from "@/types/database";
 export const dynamic = "force-dynamic";
 
 export default async function AffiliatePage() {
-  const { settings, products } = await getStorefrontBundle();
-  if (!isAffiliateProgramEnabled(settings)) {
-    redirect("/");
-  }
-
   if (!isSupabaseServerConfigured()) {
     redirect("/login?next=/affiliate");
   }
 
-  const { user } = await requireAuth("/login?next=/affiliate");
-  const supabase = await createServerSupabaseClient();
+  const [{ settings, products }, { user }, supabase] = await Promise.all([
+    getStorefrontBundle(),
+    requireAuth("/login?next=/affiliate"),
+    createServerSupabaseClient(),
+  ]);
+
+  if (!isAffiliateProgramEnabled(settings)) {
+    redirect("/");
+  }
   const { data: aff } = await supabase
     .from("affiliates")
     .select(

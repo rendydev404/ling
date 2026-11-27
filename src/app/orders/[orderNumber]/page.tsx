@@ -22,6 +22,13 @@ import {
 
 export const dynamic = "force-dynamic";
 
+function isRecentTimestamp(iso?: string | null, windowMs = 10_000): boolean {
+  if (!iso) return false;
+  const parsed = Date.parse(iso);
+  if (Number.isNaN(parsed)) return false;
+  return Date.now() - parsed < windowMs;
+}
+
 function sanitizeMidtransRedirectUrl(url?: string | null): string | null {
   if (!url) return null;
   try {
@@ -98,7 +105,10 @@ export default async function OrderStatusPage({
       mainItem = { product_title: firstItem.product_title, slug: prod?.slug ?? null };
     }
 
-    if (order && order.payment_status === "pending" && midtransReady) {
+    const isFreshlyCreatedPending =
+      Boolean(order?.payment_instructions) && isRecentTimestamp(order?.created_at);
+
+    if (order && order.payment_status === "pending" && midtransReady && !isFreshlyCreatedPending) {
       const liveStatus = await getMidtransTransactionStatus(
         order.midtrans_order_id || order.order_number
       );
@@ -151,8 +161,9 @@ export default async function OrderStatusPage({
     ? Number(order.total_amount)
     : liveGrossAmount ?? Number(query.amount || 0);
   const rawMethod = order?.payment_method ?? livePaymentMethod;
-  const displayMethod = isPaymentMethodCode(rawMethod)
-    ? PAYMENT_METHODS[rawMethod].label
+  const resolvedMethodCode = isPaymentMethodCode(rawMethod) ? rawMethod : null;
+  const displayMethod = resolvedMethodCode
+    ? PAYMENT_METHODS[resolvedMethodCode].label
     : rawMethod?.replace(/_/g, " ") ?? null;
   // Legacy Snap orders created before the Core API switch can still resume on Midtrans
   const resumeSnapUrl = sanitizeMidtransRedirectUrl(
@@ -254,6 +265,7 @@ export default async function OrderStatusPage({
       buyerEmail={order?.buyer_email ?? null}
       productTitle={mainItem?.product_title ?? query.product ?? null}
       productSlug={mainItem?.slug ?? null}
+      methodCode={resolvedMethodCode}
       methodLabel={displayMethod}
       createdAt={order?.created_at ?? null}
       paidAt={order?.paid_at ?? null}

@@ -1,5 +1,6 @@
 import { Banknote, Eye, MousePointerClick, TrendingUp } from "lucide-react";
-import { createServerSupabaseClient, isSupabaseServerConfigured } from "@/lib/supabase/server";
+import { isSupabaseServerConfigured } from "@/lib/supabase/server";
+import { getAdminSupabaseClient } from "@/lib/supabase/auth";
 import { formatIDR } from "@/lib/utils";
 import { Card } from "@/components/ui/controls";
 
@@ -33,7 +34,7 @@ export default async function AdminAnalyticsPage() {
   }
 
   if (isSupabaseServerConfigured()) {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await getAdminSupabaseClient();
     const [viewsRes, clicksRes, ordersRes] = await Promise.all([
       supabase
         .from("analytics_events")

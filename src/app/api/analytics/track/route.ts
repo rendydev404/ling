@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { z } from "zod";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
@@ -22,11 +22,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false }, { status: 400 });
     }
 
-    await supabase.from("analytics_events").insert({
+    const payload = {
       event_type: parsed.data.event_type,
       product_id: parsed.data.product_id ?? null,
       block_id: parsed.data.block_id ?? null,
       referrer: parsed.data.referrer ?? null,
+    };
+
+    after(async () => {
+      await supabase.from("analytics_events").insert(payload);
     });
 
     return NextResponse.json({ ok: true });

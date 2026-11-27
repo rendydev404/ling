@@ -5,9 +5,12 @@ import type { MemberEbook } from "@/lib/ebooks";
 type Rel<T> = T | T[] | null;
 const one = <T,>(v: Rel<T>): T | null => (Array.isArray(v) ? (v[0] ?? null) : v);
 
+/** Per-request memoized server Supabase client so parallel member queries share one instance. */
+const getMemberSupabase = cache(() => createServerSupabaseClient());
+
 /** Whole published ebook catalog for this member (owned + locked) in one RPC. */
 export const getMemberLibrary = cache(async (): Promise<MemberEbook[]> => {
-  const supabase = await createServerSupabaseClient();
+  const supabase = await getMemberSupabase();
   const { data, error } = await supabase.rpc("get_member_library");
   if (error) {
     console.error("[member] get_member_library", error.message);
@@ -33,8 +36,8 @@ export interface MemberOrder {
   items: string[];
 }
 
-export async function getMemberOrders(userId: string, limit = 50): Promise<MemberOrder[]> {
-  const supabase = await createServerSupabaseClient();
+export const getMemberOrders = cache(async (userId: string, limit = 50): Promise<MemberOrder[]> => {
+  const supabase = await getMemberSupabase();
   const { data } = await supabase
     .from("orders")
     .select(
@@ -55,7 +58,7 @@ export async function getMemberOrders(userId: string, limit = 50): Promise<Membe
     created_at: o.created_at,
     items: ((o.order_items ?? []) as Array<{ product_title: string }>).map((i) => i.product_title),
   }));
-}
+});
 
 export interface MemberCourse {
   product_id: string;
@@ -66,8 +69,8 @@ export interface MemberCourse {
   completed_lessons: number;
 }
 
-export async function getMemberCourses(userId: string): Promise<MemberCourse[]> {
-  const supabase = await createServerSupabaseClient();
+export const getMemberCourses = cache(async (userId: string): Promise<MemberCourse[]> => {
+  const supabase = await getMemberSupabase();
   const [enrollRes, progressRes] = await Promise.all([
     supabase
       .from("course_enrollments")
@@ -92,7 +95,7 @@ export async function getMemberCourses(userId: string): Promise<MemberCourse[]> 
       completed_lessons: done.get(e.product_id) ?? 0,
     };
   });
-}
+});
 
 export interface MemberBooking {
   id: string;
@@ -113,8 +116,8 @@ export interface MemberTicket {
   status: string;
 }
 
-export async function getMemberSchedule(userId: string): Promise<{ bookings: MemberBooking[]; tickets: MemberTicket[] }> {
-  const supabase = await createServerSupabaseClient();
+export const getMemberSchedule = cache(async (userId: string): Promise<{ bookings: MemberBooking[]; tickets: MemberTicket[] }> => {
+  const supabase = await getMemberSupabase();
   const [bookingsRes, ticketsRes] = await Promise.all([
     supabase
       .from("appointment_bookings")
@@ -153,7 +156,7 @@ export async function getMemberSchedule(userId: string): Promise<{ bookings: Mem
       };
     }),
   };
-}
+});
 
 export interface MemberMembership {
   id: string;
@@ -163,8 +166,8 @@ export interface MemberMembership {
   community_link: string | null;
 }
 
-export async function getMemberMemberships(userId: string): Promise<MemberMembership[]> {
-  const supabase = await createServerSupabaseClient();
+export const getMemberMemberships = cache(async (userId: string): Promise<MemberMembership[]> => {
+  const supabase = await getMemberSupabase();
   const { data } = await supabase
     .from("membership_subscriptions")
     .select("id, status, expires_at, products(title, metadata)")
@@ -182,4 +185,4 @@ export async function getMemberMemberships(userId: string): Promise<MemberMember
       community_link: prod?.metadata?.community_link ?? null,
     };
   });
-}
+});

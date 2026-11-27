@@ -1,4 +1,5 @@
-import { createServerSupabaseClient, isSupabaseServerConfigured } from "@/lib/supabase/server";
+import { isSupabaseServerConfigured } from "@/lib/supabase/server";
+import { getAdminSupabaseClient } from "@/lib/supabase/auth";
 import type { Product } from "@/types/database";
 import { ProductsManager } from "@/components/admin/products-manager";
 
@@ -9,7 +10,7 @@ export default async function AdminProductsPage() {
   const isDemoMode = !isSupabaseServerConfigured();
 
   if (!isDemoMode) {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await getAdminSupabaseClient();
     const { data } = await supabase
       .from("products")
       .select(

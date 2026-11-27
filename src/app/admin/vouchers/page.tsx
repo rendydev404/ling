@@ -1,4 +1,5 @@
-import { createServerSupabaseClient, isSupabaseServerConfigured } from "@/lib/supabase/server";
+import { isSupabaseServerConfigured } from "@/lib/supabase/server";
+import { getAdminSupabaseClient } from "@/lib/supabase/auth";
 import type { Voucher } from "@/types/database";
 import { VouchersManager } from "@/components/admin/vouchers-manager";
 
@@ -9,7 +10,7 @@ export default async function AdminVouchersPage() {
   const isDemoMode = !isSupabaseServerConfigured();
 
   if (!isDemoMode) {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await getAdminSupabaseClient();
     const { data } = await supabase
       .from("vouchers")
       .select(

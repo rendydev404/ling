@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { formatDateTimeID, formatIDR } from "@/lib/utils";
 import { Badge, Card } from "@/components/ui/controls";
+import { PaymentMethodChip } from "@/components/checkout/payment-method-picker";
+import type { PaymentMethodCode } from "@/lib/payment-methods";
 
 type ResultKind = "paid" | "failed" | "refunded" | "pending";
 
@@ -42,6 +44,7 @@ export interface OrderResultCardProps {
   productTitle?: string | null;
   /** Slug of the main product, used for the "order again" button on failed payments */
   productSlug?: string | null;
+  methodCode?: PaymentMethodCode | null;
   methodLabel?: string | null;
   createdAt?: string | null;
   paidAt?: string | null;
@@ -130,9 +133,12 @@ export function OrderResultCard(props: OrderResultCardProps) {
               </div>
             )}
             {props.methodLabel && (
-              <div className="flex justify-between gap-3">
+              <div className="flex items-center justify-between gap-3">
                 <span className="text-[#475569] font-semibold">Metode Bayar</span>
-                <span className="font-extrabold text-[#7e22ce] text-right">{props.methodLabel}</span>
+                <span className="inline-flex items-center gap-2 font-extrabold text-[#7e22ce] text-right">
+                  {props.methodCode && <PaymentMethodChip code={props.methodCode} size="sm" />}
+                  <span>{props.methodLabel}</span>
+                </span>
               </div>
             )}
             <div className="flex justify-between gap-3">

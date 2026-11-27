@@ -4,7 +4,7 @@ import { isMidtransConfigured } from "@/lib/midtrans";
 import { BioStorefront } from "@/components/storefront/bio-storefront";
 import { PixelScripts } from "@/components/marketing/pixel-scripts";
 
-export const revalidate = 60;
+export const revalidate = 3600;
 
 export async function generateMetadata(): Promise<Metadata> {
   const { settings } = await getStorefrontBundle();

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
+import { ExternalLink, ImagePlus, Pencil, Plus, Trash2, UploadCloud, X } from "lucide-react";
 import type { Product, ProductStatus, ProductType } from "@/types/database";
 import { PRODUCT_TYPE_META, ProductTypeIcon } from "@/components/storefront/product-type-meta";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ interface ProductFormState {
   slug: string;
   short_description: string;
   description: string;
+  thumbnail_url: string;
   price: string;
   compare_at_price: string;
   is_pay_what_you_want: boolean;
@@ -51,12 +52,21 @@ interface ProductFormState {
   benefits_text: string;
 }
 
+const MAX_COVER_SIZE = 5 * 1024 * 1024;
+const ALLOWED_COVER_MIMES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/avif",
+]);
+
 const EMPTY_FORM: ProductFormState = {
   type: "digital",
   title: "",
   slug: "",
   short_description: "",
   description: "",
+  thumbnail_url: "",
   price: "99000",
   compare_at_price: "",
   is_pay_what_you_want: false,
@@ -103,6 +113,55 @@ export function ProductsManager({
   const [form, setForm] = React.useState<ProductFormState>(EMPTY_FORM);
   const [deleteTarget, setDeleteTarget] = React.useState<Product | null>(null);
 
+  const coverInputRef = React.useRef<HTMLInputElement>(null);
+  const [coverFile, setCoverFile] = React.useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = React.useState<string | null>(null);
+  const [coverDragOver, setCoverDragOver] = React.useState(false);
+
+  React.useEffect(() => {
+    return () => {
+      if (coverPreview) URL.revokeObjectURL(coverPreview);
+    };
+  }, [coverPreview]);
+
+  function resetCoverSelection() {
+    setCoverFile(null);
+    setCoverPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+    setCoverDragOver(false);
+  }
+
+  function pickCoverFile(file: File) {
+    if (!ALLOWED_COVER_MIMES.has(file.type)) {
+      toast({
+        type: "error",
+        title: "Format gambar tidak didukung",
+        description: "Gunakan file JPG, PNG, WebP, atau AVIF.",
+      });
+      return;
+    }
+    if (file.size > MAX_COVER_SIZE) {
+      toast({
+        type: "error",
+        title: "Ukuran cover terlalu besar",
+        description: "Maksimal ukuran gambar cover adalah 5 MB.",
+      });
+      return;
+    }
+    setCoverFile(file);
+    setCoverPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
+  }
+
+  function clearCover() {
+    resetCoverSelection();
+    setForm((prev) => ({ ...prev, thumbnail_url: "" }));
+  }
+
   const filtered = React.useMemo(() => {
     const q = search.trim().toLowerCase();
     return products.filter((p) => {
@@ -119,11 +178,13 @@ export function ProductsManager({
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   function openCreate() {
+    resetCoverSelection();
     setForm(EMPTY_FORM);
     setModalOpen(true);
   }
 
   function openEdit(p: Product) {
+    resetCoverSelection();
     setForm({
       id: p.id,
       type: p.type,
@@ -131,6 +192,7 @@ export function ProductsManager({
       slug: p.slug,
       short_description: p.short_description ?? "",
       description: p.description ?? "",
+      thumbnail_url: p.thumbnail_url ?? "",
       price: String(p.price),
       compare_at_price: p.compare_at_price !== null ? String(p.compare_at_price) : "",
       is_pay_what_you_want: p.is_pay_what_you_want,
@@ -200,7 +262,7 @@ export function ProductsManager({
         .filter(Boolean);
     }
 
-    const payload = {
+    const basePayload = {
       id: form.id,
       type: form.type,
       title: form.title.trim(),
@@ -224,10 +286,11 @@ export function ProductsManager({
     };
 
     if (isDemoMode) {
+      const demoThumb = coverPreview ?? (form.thumbnail_url.trim() || null);
       const localItem: Product = {
-        ...payload,
+        ...basePayload,
         id: form.id ?? `prod-${Date.now()}`,
-        thumbnail_url: null,
+        thumbnail_url: demoThumb,
         gallery_urls: [],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -235,6 +298,7 @@ export function ProductsManager({
       setProducts((prev) =>
         form.id ? prev.map((p) => (p.id === form.id ? localItem : p)) : [localItem, ...prev]
       );
+      setCoverFile(null);
       setModalOpen(false);
       toast({ type: "success", title: "Produk tersimpan di pratinjau lokal" });
       return;
@@ -242,6 +306,32 @@ export function ProductsManager({
 
     setSaving(true);
     try {
+      let resolvedThumbnailUrl: string | null = form.thumbnail_url.trim() || null;
+
+      if (coverFile) {
+        const fd = new FormData();
+        fd.append("file", coverFile);
+        const uploadRes = await fetch("/api/admin/products/cover", {
+          method: "POST",
+          body: fd,
+        });
+        const uploadJson = await uploadRes.json();
+        if (!uploadRes.ok || !uploadJson.url) {
+          toast({
+            type: "error",
+            title: "Gagal mengunggah cover produk",
+            description: uploadJson.error ?? "Silakan coba lagi.",
+          });
+          return;
+        }
+        resolvedThumbnailUrl = uploadJson.url as string;
+      }
+
+      const payload = {
+        ...basePayload,
+        thumbnail_url: resolvedThumbnailUrl,
+      };
+
       const res = await fetch("/api/admin/products", {
         method: form.id ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
@@ -256,6 +346,7 @@ export function ProductsManager({
       setProducts((prev) =>
         form.id ? prev.map((p) => (p.id === saved.id ? saved : p)) : [saved, ...prev]
       );
+      resetCoverSelection();
       setModalOpen(false);
       toast({ type: "success", title: form.id ? "Produk diperbarui" : "Produk dibuat" });
     } finally {
@@ -357,32 +448,49 @@ export function ProductsManager({
                 return (
                   <div key={p.id} className="p-4 space-y-3">
                     <div className="flex items-start justify-between gap-2.5">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
-                          <span
-                            className={`inline-flex items-center gap-1 rounded-md border-2 border-[#0f172a] px-2 py-0.5 text-[10px] font-black shadow-[1px_1px_0px_#0f172a] ${meta.accentBg} ${meta.accentText}`}
-                          >
-                            <ProductTypeIcon type={p.type} className="h-3 w-3" />
-                            {meta.shortLabel}
-                          </span>
-                          <Badge
-                            variant={
-                              p.status === "published"
-                                ? "success"
-                                : p.status === "draft"
-                                ? "warning"
-                                : "neutral"
-                            }
-                          >
-                            {p.status}
-                          </Badge>
+                      <div className="flex items-start gap-3 min-w-0 flex-1">
+                        <div
+                          className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 border-[#0f172a] shadow-[2px_2px_0px_#0f172a] ${meta.accentBg} ${meta.accentText}`}
+                        >
+                          {p.thumbnail_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={p.thumbnail_url}
+                              alt={p.title}
+                              loading="lazy"
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <ProductTypeIcon type={p.type} className="h-5 w-5" />
+                          )}
                         </div>
-                        <p className="text-sm font-black text-[#0f172a] leading-snug">
-                          {p.title}
-                        </p>
-                        <p className="text-[11px] font-semibold text-[#64748b] truncate">
-                          /p/{p.slug}
-                        </p>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                            <span
+                              className={`inline-flex items-center gap-1 rounded-md border-2 border-[#0f172a] px-2 py-0.5 text-[10px] font-black shadow-[1px_1px_0px_#0f172a] ${meta.accentBg} ${meta.accentText}`}
+                            >
+                              <ProductTypeIcon type={p.type} className="h-3 w-3" />
+                              {meta.shortLabel}
+                            </span>
+                            <Badge
+                              variant={
+                                p.status === "published"
+                                  ? "success"
+                                  : p.status === "draft"
+                                  ? "warning"
+                                  : "neutral"
+                              }
+                            >
+                              {p.status}
+                            </Badge>
+                          </div>
+                          <p className="text-sm font-black text-[#0f172a] leading-snug">
+                            {p.title}
+                          </p>
+                          <p className="text-[11px] font-semibold text-[#64748b] truncate">
+                            /p/{p.slug}
+                          </p>
+                        </div>
                       </div>
                       <p className="text-sm font-black text-[#0f172a] shrink-0">
                         {formatIDR(p.price)}
@@ -448,8 +556,27 @@ export function ProductsManager({
                     return (
                       <tr key={p.id} className="hover:bg-[#f4f8fb]">
                         <td className="px-5 py-3.5 max-w-xs">
-                          <p className="text-sm font-black text-[#0f172a] truncate">{p.title}</p>
-                          <p className="text-xs font-semibold text-[#475569] truncate">/p/{p.slug}</p>
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div
+                              className={`flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 border-[#0f172a] shadow-[2px_2px_0px_#0f172a] ${meta.accentBg} ${meta.accentText}`}
+                            >
+                              {p.thumbnail_url ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={p.thumbnail_url}
+                                  alt={p.title}
+                                  loading="lazy"
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <ProductTypeIcon type={p.type} className="h-4 w-4" />
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-black text-[#0f172a] truncate">{p.title}</p>
+                              <p className="text-xs font-semibold text-[#475569] truncate">/p/{p.slug}</p>
+                            </div>
+                          </div>
                         </td>
                         <td className="px-5 py-3.5">
                           <span
@@ -522,13 +649,18 @@ export function ProductsManager({
       {/* Product Editor Modal */}
       <CustomModal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={() => !saving && setModalOpen(false)}
         title={form.id ? "Edit Produk" : "Buat Produk / Layanan Baru"}
-        description="Konfigurasi detail produk, order bump checkout, dan komisi affiliate."
+        description="Konfigurasi cover, detail produk, order bump checkout, dan komisi affiliate."
         size="xl"
         footer={
           <>
-            <Button variant="outline" size="sm" onClick={() => setModalOpen(false)}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={saving}
+              onClick={() => setModalOpen(false)}
+            >
               Batal
             </Button>
             <Button size="sm" onClick={handleSave} isLoading={saving}>
@@ -538,6 +670,118 @@ export function ProductsManager({
         }
       >
         <div className="space-y-5">
+          {/* Cover / Thumbnail Produk */}
+          <div className="rounded-xl border-2 border-[#0f172a] bg-[#f8fafc] p-4 shadow-[3px_3px_0px_#0f172a]">
+            <p className="text-xs font-black uppercase tracking-wider text-[#0f172a] mb-3">
+              Cover / Thumbnail Produk
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-[210px_1fr] gap-4 items-start">
+              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl border-2 border-[#0f172a] bg-white shadow-[3px_3px_0px_#0f172a]">
+                {coverPreview || form.thumbnail_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={coverPreview || form.thumbnail_url}
+                    alt={form.title || "Pratinjau cover produk"}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full flex-col items-center justify-center gap-1.5 bg-[#ecfeff] p-3 text-center">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-[#0f172a] bg-white text-[#0f172a] shadow-[2px_2px_0px_#0f172a]">
+                      <ImagePlus className="h-5 w-5" />
+                    </span>
+                    <span className="text-[11px] font-extrabold text-[#0f172a]">
+                      Belum ada cover
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => coverInputRef.current?.click()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      coverInputRef.current?.click();
+                    }
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setCoverDragOver(true);
+                  }}
+                  onDragLeave={() => setCoverDragOver(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setCoverDragOver(false);
+                    const f = e.dataTransfer.files?.[0];
+                    if (f) pickCoverFile(f);
+                  }}
+                  className={`flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-[#0f172a] px-4 py-4 text-center transition-colors ${
+                    coverDragOver ? "bg-[#cffafe]" : "bg-white hover:bg-[#ecfeff]"
+                  }`}
+                >
+                  <UploadCloud className="h-5 w-5 text-[#0f172a]" />
+                  <span className="text-xs font-extrabold text-[#0f172a]">
+                    {coverFile
+                      ? `File dipilih: ${coverFile.name}`
+                      : coverPreview || form.thumbnail_url
+                      ? "Klik atau tarik gambar baru untuk mengganti cover"
+                      : "Klik atau tarik gambar cover ke sini"}
+                  </span>
+                  <span className="text-[11px] font-medium text-[#475569]">
+                    JPG, PNG, WebP, atau AVIF · Maksimal 5 MB · Rasio ideal 16:10 atau 4:3
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => coverInputRef.current?.click()}
+                  >
+                    <ImagePlus className="h-3.5 w-3.5" />
+                    {coverPreview || form.thumbnail_url ? "Ganti Cover" : "Pilih Gambar"}
+                  </Button>
+                  {(coverPreview || form.thumbnail_url) && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={clearCover}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                      Hapus Cover
+                    </Button>
+                  )}
+                </div>
+
+                {!coverFile && (
+                  <Input
+                    label="Atau Tempel URL Cover Eksternal (Opsional)"
+                    value={form.thumbnail_url}
+                    onChange={(e) => setForm({ ...form, thumbnail_url: e.target.value })}
+                    placeholder="https://..."
+                  />
+                )}
+
+                <input
+                  ref={coverInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/avif"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) pickCoverFile(f);
+                    e.target.value = "";
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <CustomSelect
               label="Tipe Produk"

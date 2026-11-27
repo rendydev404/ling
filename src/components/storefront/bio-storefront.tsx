@@ -158,6 +158,7 @@ export function BioStorefront({
             </Link>
             <Link
               href="/member"
+              prefetch={false}
               className="inline-flex h-9 items-center gap-1.5 rounded-xl border-2 px-3 text-xs font-black shadow-[2px_2px_0px_#0f172a] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5"
               style={{
                 backgroundColor: theme.surfaceColor,
@@ -171,6 +172,7 @@ export function BioStorefront({
             {affiliateEnabled && (
               <Link
                 href="/affiliate"
+                prefetch={false}
                 className="inline-flex h-9 items-center gap-1.5 rounded-xl border-2 px-3 text-xs font-black shadow-[2px_2px_0px_#0f172a] transition-all hover:-translate-x-0.5 hover:-translate-y-0.5"
                 style={{
                   backgroundColor: secondaryAccent,
@@ -229,6 +231,8 @@ export function BioStorefront({
                   <img
                     src={settings.avatar_url}
                     alt={settings.brand_name}
+                    fetchPriority="high"
+                    decoding="async"
                     className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl border-2 border-[#0f172a] bg-white object-cover shadow-[4px_4px_0px_#0f172a]"
                   />
                 ) : (
@@ -511,14 +515,24 @@ export function BioStorefront({
                     <div className="flex items-start gap-3.5">
                       <div
                         className={cn(
-                          "flex shrink-0 items-center justify-center rounded-xl border-2 shadow-[2px_2px_0px_#0f172a]",
-                          isFeatured ? "h-12 w-12" : "h-11 w-11",
+                          "flex shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 shadow-[2px_2px_0px_#0f172a]",
+                          isFeatured ? "h-16 w-16" : "h-12 w-12",
                           meta.accentBg,
                           meta.accentText
                         )}
                         style={{ borderColor: theme.borderColor }}
                       >
-                        <ProductTypeIcon type={product.type} className="h-5 w-5" />
+                        {product.thumbnail_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={product.thumbnail_url}
+                            alt={product.title}
+                            loading="lazy"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <ProductTypeIcon type={product.type} className="h-5 w-5" />
+                        )}
                       </div>
 
                       <div className="min-w-0 flex-1">

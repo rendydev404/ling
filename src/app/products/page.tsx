@@ -6,7 +6,7 @@ import { ProductCatalogShowcase } from "@/components/storefront/product-catalog-
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { isAffiliateProgramEnabled } from "@/lib/utils";
 
-export const revalidate = 60;
+export const revalidate = 3600;
 
 export async function generateMetadata(): Promise<Metadata> {
   const { settings } = await getStorefrontBundle();
@@ -44,6 +44,7 @@ export default async function CustomerProductsPage() {
           <nav className="flex items-center gap-2">
             <Link
               href="/member"
+              prefetch={false}
               className="inline-flex h-9 items-center gap-1.5 rounded-xl border-2 border-[#0f172a] bg-white px-3 text-xs font-black text-[#0f172a] shadow-[2px_2px_0px_#0f172a] hover:bg-[#ecfeff]"
             >
               <ShoppingBag className="h-3.5 w-3.5" />
@@ -52,6 +53,7 @@ export default async function CustomerProductsPage() {
             {affiliateEnabled && (
               <Link
                 href="/affiliate"
+                prefetch={false}
                 className="inline-flex h-9 items-center gap-1.5 rounded-xl border-2 border-[#0f172a] px-3 text-xs font-black text-white shadow-[2px_2px_0px_#0f172a]"
                 style={{ backgroundColor: secondaryAccent }}
               >
@@ -65,13 +67,6 @@ export default async function CustomerProductsPage() {
 
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 sm:px-6 py-7 sm:py-9 space-y-6">
         <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border-2 border-[#0f172a] bg-[#67e8f9] p-6 sm:p-8 shadow-[6px_6px_0px_#0f172a]">
-          <div
-            className="pointer-events-none absolute inset-0 opacity-20"
-            style={{
-              backgroundImage: "radial-gradient(#0f172a 1.5px, transparent 1.5px)",
-              backgroundSize: "14px 14px",
-            }}
-          />
           <div className="relative flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
               <span className="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#0f172a] bg-white px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-[#0f172a] shadow-[2px_2px_0px_#0f172a]">

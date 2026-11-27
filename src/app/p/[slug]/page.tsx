@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -20,9 +21,32 @@ import { PRODUCT_TYPE_META, ProductTypeIcon } from "@/components/storefront/prod
 import { PixelScripts } from "@/components/marketing/pixel-scripts";
 import { Badge, Card } from "@/components/ui/controls";
 
-export const revalidate = 60;
+export const revalidate = 3600;
 
 const WEEKDAY_NAMES = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const { product, settings } = await getProductBySlug(slug);
+  if (!product) {
+    return { title: `Produk Tidak Ditemukan — ${settings.brand_name}` };
+  }
+  return {
+    title: `${product.title} — ${settings.brand_name}`,
+    description: product.short_description || product.description?.slice(0, 160) || settings.bio,
+    openGraph: product.thumbnail_url
+      ? {
+          title: product.title,
+          description: product.short_description || settings.bio,
+          images: [{ url: product.thumbnail_url }],
+        }
+      : undefined,
+  };
+}
 
 export default async function ProductDetailPage({
   params,
@@ -67,6 +91,7 @@ export default async function ProductDetailPage({
           </Link>
           <Link
             href="/member"
+            prefetch={false}
             className="rounded-lg border-2 border-[#0f172a] bg-[#a855f7] px-3 py-1 text-xs font-extrabold text-white shadow-[2px_2px_0px_#0f172a] hover:bg-[#9333ea]"
           >
             Member Area
@@ -78,6 +103,19 @@ export default async function ProductDetailPage({
         <div className="grid grid-cols-1 gap-6">
           {/* Product Header Card */}
           <Card className="p-6 sm:p-8">
+            {product.thumbnail_url && (
+              <div className="mb-6 overflow-hidden rounded-2xl border-2 border-[#0f172a] bg-[#f4f8fb] shadow-[4px_4px_0px_#0f172a]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={product.thumbnail_url}
+                  alt={product.title}
+                  fetchPriority="high"
+                  decoding="async"
+                  className="max-h-[380px] w-full object-cover"
+                />
+              </div>
+            )}
+
             <div className="flex flex-wrap items-center gap-2 mb-4">
               <span
                 className={`inline-flex items-center gap-1.5 rounded-lg border-2 border-[#0f172a] px-2.5 py-1 text-xs font-extrabold uppercase shadow-[2px_2px_0px_#0f172a] ${meta.accentBg} ${meta.accentText}`}

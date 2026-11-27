@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   ArrowUpDown,
   ArrowUpRight,
+  Check,
   ChevronDown,
   Flame,
   LayoutGrid,
@@ -100,7 +101,27 @@ export function ProductCatalogShowcase({
   const [selectedType, setSelectedType] = React.useState<"all" | ProductType>("all");
   const [searchQuery, setSearchQuery] = React.useState("");
   const [sortMode, setSortMode] = React.useState<SortMode>("featured");
+  const [sortOpen, setSortOpen] = React.useState(false);
   const [viewMode, setViewMode] = React.useState<ViewMode>("grid");
+  const sortRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!sortOpen) return;
+    function onDocClick(e: MouseEvent) {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
+        setSortOpen(false);
+      }
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setSortOpen(false);
+    }
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [sortOpen]);
 
   const secondaryAccent = theme.secondaryAccentColor || "#a855f7";
 
@@ -169,18 +190,13 @@ export function ProductCatalogShowcase({
                 getPosterBg(spotlightProduct.type)
               )}
             >
-              <div
-                className="pointer-events-none absolute inset-0 opacity-20"
-                style={{
-                  backgroundImage: "radial-gradient(#0f172a 1.5px, transparent 1.5px)",
-                  backgroundSize: "14px 14px",
-                }}
-              />
               {spotlightProduct.thumbnail_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={spotlightProduct.thumbnail_url}
                   alt={spotlightProduct.title}
+                  fetchPriority="high"
+                  decoding="async"
                   className="absolute inset-0 h-full w-full object-cover"
                 />
               ) : (
@@ -283,22 +299,57 @@ export function ProductCatalogShowcase({
           </div>
 
           <div className="flex items-center justify-between sm:justify-end gap-2">
-            {/* Custom Styled Sort Select */}
-            <div className="relative inline-flex items-center rounded-xl border-2 border-[#0f172a] bg-[#f4f8fb] h-10 pl-3 pr-8">
-              <ArrowUpDown className="h-3.5 w-3.5 text-[#0f172a] mr-1.5 shrink-0" />
-              <select
-                aria-label="Urutkan produk"
-                value={sortMode}
-                onChange={(e) => setSortMode(e.target.value as SortMode)}
-                className="appearance-none bg-transparent text-xs font-black text-[#0f172a] focus:outline-none cursor-pointer"
+            {/* Custom Accessible Sort Popover */}
+            <div ref={sortRef} className="relative">
+              <button
+                type="button"
+                aria-haspopup="listbox"
+                aria-expanded={sortOpen}
+                onClick={() => setSortOpen((v) => !v)}
+                className="inline-flex h-10 items-center gap-1.5 rounded-xl border-2 border-[#0f172a] bg-[#f4f8fb] px-3 text-xs font-black text-[#0f172a] transition-colors hover:bg-[#ecfeff] cursor-pointer"
               >
-                {SORT_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-2.5 h-3.5 w-3.5 text-[#0f172a]" />
+                <ArrowUpDown className="h-3.5 w-3.5 text-[#0f172a] shrink-0" />
+                <span>{SORT_OPTIONS.find((o) => o.value === sortMode)?.label ?? "Unggulan"}</span>
+                <ChevronDown
+                  className={cn(
+                    "h-3.5 w-3.5 text-[#0f172a] transition-transform",
+                    sortOpen && "rotate-180"
+                  )}
+                />
+              </button>
+
+              {sortOpen && (
+                <div
+                  role="listbox"
+                  aria-label="Urutkan produk"
+                  className="absolute right-0 z-30 mt-1.5 w-44 overflow-hidden rounded-xl border-2 border-[#0f172a] bg-white p-1 shadow-[4px_4px_0px_#0f172a]"
+                >
+                  {SORT_OPTIONS.map((opt) => {
+                    const active = opt.value === sortMode;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        role="option"
+                        aria-selected={active}
+                        onClick={() => {
+                          setSortMode(opt.value);
+                          setSortOpen(false);
+                        }}
+                        className={cn(
+                          "flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs font-black transition-colors cursor-pointer",
+                          active
+                            ? "bg-[#22d3ee] text-[#0f172a]"
+                            : "text-[#334155] hover:bg-[#f3e8ff] hover:text-[#0f172a]"
+                        )}
+                      >
+                        <span>{opt.label}</span>
+                        {active && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Grid vs List Toggle */}
@@ -416,18 +467,13 @@ export function ProductCatalogShowcase({
                     getPosterBg(product.type)
                   )}
                 >
-                  <div
-                    className="pointer-events-none absolute inset-0 opacity-20"
-                    style={{
-                      backgroundImage: "radial-gradient(#0f172a 1.25px, transparent 1.25px)",
-                      backgroundSize: "12px 12px",
-                    }}
-                  />
                   {product.thumbnail_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={product.thumbnail_url}
                       alt={product.title}
+                      loading="lazy"
+                      decoding="async"
                       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   ) : (
@@ -549,6 +595,8 @@ export function ProductCatalogShowcase({
                       <img
                         src={product.thumbnail_url}
                         alt={product.title}
+                        loading="lazy"
+                        decoding="async"
                         className="h-full w-full object-cover"
                       />
                     ) : (

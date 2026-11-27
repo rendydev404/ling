@@ -132,6 +132,15 @@ export async function requireAdmin() {
 }
 
 /**
+ * Verifies admin access (deduped per request via React.cache) and returns the
+ * service-role client so admin RSC queries skip per-row RLS subquery overhead.
+ */
+export const getAdminSupabaseClient = cache(async () => {
+  await requireAdmin();
+  return createServiceRoleClient() ?? (await createServerSupabaseClient());
+});
+
+/**
  * Shared guard for /api/admin/* endpoints.
  */
 export async function assertAdminApi() {

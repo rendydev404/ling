@@ -41,7 +41,7 @@ const fetchCachedStoreSettings = unstable_cache(
     return { settings: data as StoreSettings, isDemoMode: false };
   },
   ["store-settings-v1"],
-  { revalidate: 60, tags: ["storefront", "settings"] }
+  { revalidate: 3600, tags: ["storefront", "settings"] }
 );
 
 export const getStoreSettings = cache(async () => {
@@ -108,7 +108,7 @@ const fetchCachedStorefrontBundle = unstable_cache(
     };
   },
   ["storefront-bundle-v1"],
-  { revalidate: 60, tags: ["storefront", "settings", "products", "blocks"] }
+  { revalidate: 3600, tags: ["storefront", "settings", "products", "blocks"] }
 );
 
 export const getStorefrontBundle = cache(async () => {
@@ -157,21 +157,36 @@ const fetchCachedProductBySlug = unstable_cache(
       };
     }
 
-    const [settingsRes, productRes] = await Promise.all([
-      supabase
-        .from("store_settings")
-        .select(SETTINGS_COLUMNS)
-        .eq("singleton_key", "primary")
-        .single(),
+    const [{ settings }, productRes] = await Promise.all([
+      fetchCachedStoreSettings(),
       supabase.from("products").select(PRODUCT_COLUMNS).eq("slug", slug).single(),
     ]);
 
-    const settings = (settingsRes.data as StoreSettings | null) ?? DEFAULT_STORE_SETTINGS;
     const product = (productRes.data as Product | null) ?? null;
 
     if (!product) {
       return {
         product: null,
+        variants: [],
+        courseSections: [],
+        availability: [],
+        orderBumpProduct: null,
+        recentDonations: [],
+        settings,
+        isDemoMode: false,
+      };
+    }
+
+    const needsExtraQueries =
+      product.type === "physical" ||
+      product.type === "course" ||
+      product.type === "appointment" ||
+      product.type === "donation" ||
+      Boolean(product.order_bump_product_id);
+
+    if (!needsExtraQueries) {
+      return {
+        product,
         variants: [],
         courseSections: [],
         availability: [],
@@ -223,10 +238,10 @@ const fetchCachedProductBySlug = unstable_cache(
           : Promise.resolve({ data: null }),
         product.type === "donation"
           ? supabase
-              .from("donation_messages")
+              .from("donations")
               .select("id, supporter_name, is_anonymous, message, amount, created_at")
               .eq("product_id", product.id)
-              .eq("is_public", true)
+              .eq("is_visible", true)
               .order("created_at", { ascending: false })
               .limit(10)
           : Promise.resolve({ data: [] }),
@@ -260,7 +275,7 @@ const fetchCachedProductBySlug = unstable_cache(
     };
   },
   ["product-by-slug-v1"],
-  { revalidate: 60, tags: ["storefront", "products", "settings"] }
+  { revalidate: 3600, tags: ["storefront", "products", "settings"] }
 );
 
 export const getProductBySlug = cache(async (slug: string) => {

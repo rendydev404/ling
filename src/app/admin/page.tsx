@@ -10,7 +10,8 @@ import {
   Tag,
   Users,
 } from "lucide-react";
-import { createServerSupabaseClient, isSupabaseServerConfigured } from "@/lib/supabase/server";
+import { isSupabaseServerConfigured } from "@/lib/supabase/server";
+import { getAdminSupabaseClient } from "@/lib/supabase/auth";
 import { formatDateTimeID, formatIDR } from "@/lib/utils";
 import { Badge, Card } from "@/components/ui/controls";
 
@@ -32,7 +33,7 @@ export default async function AdminOverviewPage() {
   }> = [];
 
   if (isSupabaseServerConfigured()) {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await getAdminSupabaseClient();
     const [paidOrdersRes, productsCountRes, viewsCountRes, recentOrdersRes] = await Promise.all([
       supabase
         .from("orders")

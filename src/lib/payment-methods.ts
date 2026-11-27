@@ -23,7 +23,9 @@ export interface PaymentMethodMeta {
   label: string;
   shortLabel: string;
   description: string;
-  /** Tailwind classes for the small brand chip shown next to the label */
+  /** Path to official SVG logo under /public/payment-logos */
+  logoSrc: string;
+  /** Tailwind classes for fallback chip styling */
   chipClass: string;
 }
 
@@ -34,6 +36,7 @@ export const PAYMENT_METHODS: Record<PaymentMethodCode, PaymentMethodMeta> = {
     label: "QRIS",
     shortLabel: "QRIS",
     description: "Scan pakai m-banking atau e-wallet apa pun",
+    logoSrc: "/payment-logos/qris.svg",
     chipClass: "bg-[#0f172a] text-white",
   },
   gopay: {
@@ -42,6 +45,7 @@ export const PAYMENT_METHODS: Record<PaymentMethodCode, PaymentMethodMeta> = {
     label: "GoPay",
     shortLabel: "GoPay",
     description: "Bayar langsung di aplikasi Gojek / GoPay",
+    logoSrc: "/payment-logos/gopay.svg",
     chipClass: "bg-[#00aed6] text-white",
   },
   shopeepay: {
@@ -50,6 +54,7 @@ export const PAYMENT_METHODS: Record<PaymentMethodCode, PaymentMethodMeta> = {
     label: "ShopeePay",
     shortLabel: "SPay",
     description: "Dibuka di aplikasi Shopee (di HP)",
+    logoSrc: "/payment-logos/shopeepay.svg",
     chipClass: "bg-[#ee4d2d] text-white",
   },
   bca_va: {
@@ -58,6 +63,7 @@ export const PAYMENT_METHODS: Record<PaymentMethodCode, PaymentMethodMeta> = {
     label: "BCA Virtual Account",
     shortLabel: "BCA",
     description: "Transfer via m-BCA, KlikBCA, atau ATM",
+    logoSrc: "/payment-logos/bca.svg",
     chipClass: "bg-[#0060af] text-white",
   },
   bni_va: {
@@ -66,6 +72,7 @@ export const PAYMENT_METHODS: Record<PaymentMethodCode, PaymentMethodMeta> = {
     label: "BNI Virtual Account",
     shortLabel: "BNI",
     description: "Transfer via BNI Mobile, ATM, atau bank lain",
+    logoSrc: "/payment-logos/bni.svg",
     chipClass: "bg-[#f15a23] text-white",
   },
   bri_va: {
@@ -74,6 +81,7 @@ export const PAYMENT_METHODS: Record<PaymentMethodCode, PaymentMethodMeta> = {
     label: "BRI Virtual Account",
     shortLabel: "BRI",
     description: "Transfer via BRImo, ATM, atau bank lain",
+    logoSrc: "/payment-logos/bri.svg",
     chipClass: "bg-[#00529c] text-white",
   },
   mandiri_bill: {
@@ -82,6 +90,7 @@ export const PAYMENT_METHODS: Record<PaymentMethodCode, PaymentMethodMeta> = {
     label: "Mandiri Bill Payment",
     shortLabel: "Mandiri",
     description: "Bayar via Livin' by Mandiri atau ATM Mandiri",
+    logoSrc: "/payment-logos/mandiri.svg",
     chipClass: "bg-[#003d79] text-[#ffc20e]",
   },
   permata_va: {
@@ -90,6 +99,7 @@ export const PAYMENT_METHODS: Record<PaymentMethodCode, PaymentMethodMeta> = {
     label: "Permata Virtual Account",
     shortLabel: "Permata",
     description: "Transfer via PermataMobile X atau bank lain",
+    logoSrc: "/payment-logos/permata.svg",
     chipClass: "bg-[#00843d] text-white",
   },
   cimb_va: {
@@ -98,6 +108,7 @@ export const PAYMENT_METHODS: Record<PaymentMethodCode, PaymentMethodMeta> = {
     label: "CIMB Niaga Virtual Account",
     shortLabel: "CIMB",
     description: "Transfer via OCTO Mobile atau bank lain",
+    logoSrc: "/payment-logos/cimb.svg",
     chipClass: "bg-[#7a0019] text-white",
   },
 };

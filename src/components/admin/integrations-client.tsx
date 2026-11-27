@@ -5,6 +5,7 @@ import { Copy, CreditCard, Plus, Radio, Save, Send, ShieldCheck, Trash2 } from "
 import type { MidtransConfigSummary } from "@/lib/midtrans";
 import type { ChannelState } from "@/lib/payment-channels";
 import { PAYMENT_METHODS, type PaymentMethodCode } from "@/lib/payment-methods";
+import { PaymentMethodChip } from "@/components/checkout/payment-method-picker";
 import type { OutboundWebhook, StoreSettings } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -256,18 +257,21 @@ export function IntegrationsClient({
               Cek Ulang
             </Button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
             {configuredMethods.map((code) => {
               const state = channels[code];
               return (
                 <div
                   key={code}
                   title={state?.reason}
-                  className="flex items-center justify-between gap-2 rounded-xl border-2 border-[#0f172a] bg-white px-3 py-2 shadow-[2px_2px_0px_#0f172a]"
+                  className="flex items-center justify-between gap-2.5 rounded-xl border-2 border-[#0f172a] bg-white px-3 py-2.5 shadow-[2px_2px_0px_#0f172a]"
                 >
-                  <span className="truncate text-xs font-extrabold text-[#0f172a]">
-                    {PAYMENT_METHODS[code].label}
-                  </span>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <PaymentMethodChip code={code} size="sm" />
+                    <span className="truncate text-xs font-extrabold text-[#0f172a]">
+                      {PAYMENT_METHODS[code].label}
+                    </span>
+                  </div>
                   <Badge variant={state ? (state.active ? "success" : "danger") : "warning"}>
                     {state ? (state.active ? "AKTIF" : "NONAKTIF") : "BELUM DICEK"}
                   </Badge>

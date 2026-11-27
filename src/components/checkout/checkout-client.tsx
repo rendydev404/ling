@@ -502,9 +502,18 @@ export function CheckoutClient({
 
               <div className="flex items-start gap-3 pb-4 border-b-2 border-[#0f172a]">
                 <div
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-[#0f172a] shadow-[2px_2px_0px_#0f172a] ${meta.accentBg} ${meta.accentText}`}
+                  className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 border-[#0f172a] shadow-[2px_2px_0px_#0f172a] ${meta.accentBg} ${meta.accentText}`}
                 >
-                  <ProductTypeIcon type={product.type} className="h-5 w-5" />
+                  {product.thumbnail_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={product.thumbnail_url}
+                      alt={product.title}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <ProductTypeIcon type={product.type} className="h-5 w-5" />
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-extrabold text-[#0f172a] leading-snug">

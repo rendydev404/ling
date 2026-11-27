@@ -1,5 +1,6 @@
-import { createServerSupabaseClient, isSupabaseServerConfigured } from "@/lib/supabase/server";
-import { getStorefrontBundle } from "@/lib/storefront-data";
+import { isSupabaseServerConfigured } from "@/lib/supabase/server";
+import { getAdminSupabaseClient } from "@/lib/supabase/auth";
+import { getStoreSettings } from "@/lib/storefront-data";
 import { Badge, Card } from "@/components/ui/controls";
 import { AffiliateProgramControl } from "@/components/admin/affiliate-program-control";
 import { formatDateID, formatIDR, isAffiliateProgramEnabled } from "@/lib/utils";
@@ -7,35 +8,28 @@ import { formatDateID, formatIDR, isAffiliateProgramEnabled } from "@/lib/utils"
 export const dynamic = "force-dynamic";
 
 export default async function AdminAffiliatesPage() {
-  const { settings } = await getStorefrontBundle();
+  const configured = isSupabaseServerConfigured();
+  const [{ settings }, affiliatesData] = await Promise.all([
+    getStoreSettings(),
+    configured
+      ? getAdminSupabaseClient().then((supabase) =>
+          supabase
+            .from("affiliates")
+            .select(
+              "id, referral_code, status, total_clicks, total_conversions, total_earned, total_paid_out, created_at"
+            )
+            .order("total_earned", { ascending: false })
+            .limit(100)
+        )
+      : Promise.resolve({ data: null }),
+  ]);
+
   const affiliateEnabled = isAffiliateProgramEnabled(settings);
-
-  let affiliates: Array<{
-    id: string;
-    referral_code: string;
-    status: string;
-    total_clicks: number;
-    total_conversions: number;
-    total_earned: number;
-    total_paid_out: number;
-    created_at: string;
-  }> = [];
-
-  if (isSupabaseServerConfigured()) {
-    const supabase = await createServerSupabaseClient();
-    const { data } = await supabase
-      .from("affiliates")
-      .select(
-        "id, referral_code, status, total_clicks, total_conversions, total_earned, total_paid_out, created_at"
-      )
-      .order("total_earned", { ascending: false })
-      .limit(100);
-    affiliates = (data ?? []).map((a) => ({
-      ...a,
-      total_earned: Number(a.total_earned),
-      total_paid_out: Number(a.total_paid_out),
-    }));
-  }
+  const affiliates = (affiliatesData.data ?? []).map((a) => ({
+    ...a,
+    total_earned: Number(a.total_earned),
+    total_paid_out: Number(a.total_paid_out),
+  }));
 
   return (
     <div className="space-y-6">

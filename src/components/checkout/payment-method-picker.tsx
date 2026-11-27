@@ -12,17 +12,33 @@ const GROUP_ORDER: PaymentMethodGroup[] = ["qris", "ewallet", "va"];
 
 export function PaymentMethodChip({
   code,
+  size = "md",
   className = "",
 }: {
   code: PaymentMethodCode;
+  size?: "sm" | "md";
   className?: string;
 }) {
   const meta = PAYMENT_METHODS[code];
+  const boxSize =
+    size === "sm"
+      ? "h-7 w-[64px] px-1.5 py-1 shadow-[1px_1px_0px_#0f172a]"
+      : "h-9 w-[78px] px-2 py-1.5 shadow-[2px_2px_0px_#0f172a]";
+  const imgSize = size === "sm" ? "max-h-4" : "max-h-5";
+
   return (
     <span
-      className={`inline-flex h-7 min-w-[52px] shrink-0 items-center justify-center rounded-md border-2 border-[#0f172a] px-1.5 text-[10px] font-black uppercase tracking-wide ${meta.chipClass} ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center rounded-lg border-2 border-[#0f172a] bg-white ${boxSize} ${className}`}
+      title={meta.label}
     >
-      {meta.shortLabel}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={meta.logoSrc}
+        alt={meta.label}
+        loading="lazy"
+        decoding="async"
+        className={`${imgSize} w-full object-contain select-none`}
+      />
     </span>
   );
 }

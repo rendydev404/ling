@@ -12,6 +12,7 @@ function purgeProductCache(slug?: string) {
   revalidatePath("/products");
   if (slug) {
     revalidatePath(`/p/${slug}`);
+    revalidatePath(`/checkout/${slug}`);
   }
 }
 
@@ -22,6 +23,15 @@ const productSchema = z.object({
   slug: z.string().min(2).max(180),
   short_description: z.string().max(400).nullable().optional(),
   description: z.string().max(8000).nullable().optional(),
+  thumbnail_url: z
+    .string()
+    .trim()
+    .max(2048)
+    .refine((v) => /^https?:\/\//i.test(v) || v.startsWith("/"), {
+      message: "URL cover produk tidak valid",
+    })
+    .nullable()
+    .optional(),
   price: z.number().min(0),
   compare_at_price: z.number().min(0).nullable().optional(),
   is_pay_what_you_want: z.boolean().default(false),

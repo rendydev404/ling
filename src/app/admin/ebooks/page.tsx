@@ -1,4 +1,5 @@
-import { createServerSupabaseClient, isSupabaseServerConfigured } from "@/lib/supabase/server";
+import { isSupabaseServerConfigured } from "@/lib/supabase/server";
+import { getAdminSupabaseClient } from "@/lib/supabase/auth";
 import { isDriveConfigured, getDriveMode } from "@/lib/google-drive";
 import { ADMIN_EBOOK_COLS, GRANT_COLS, type AdminEbook, type EbookGrant } from "@/lib/ebooks";
 import { EbooksManager, type ProductOption } from "@/components/admin/ebooks-manager";
@@ -11,7 +12,7 @@ export default async function AdminEbooksPage() {
   let grants: EbookGrant[] = [];
 
   if (isSupabaseServerConfigured()) {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await getAdminSupabaseClient();
     const [ebooksRes, productsRes, grantsRes] = await Promise.all([
       supabase.from("ebooks").select(ADMIN_EBOOK_COLS).order("created_at", { ascending: false }).limit(500),
       supabase
