@@ -44,13 +44,14 @@ export function coverUrl(ebookId: string, version?: string | null): string {
 
 export const GRANT_COLS = "id, email, user_id, ebook_id, note, expires_at, created_at";
 export const ADMIN_EBOOK_COLS =
-  "id, title, author, description, cover_drive_file_id, mime_type, file_size_bytes, page_count, status, created_at, updated_at, product_ebooks(product_id)";
+  "id, title, author, description, drive_file_id, cover_drive_file_id, mime_type, file_size_bytes, page_count, status, created_at, updated_at, product_ebooks(product_id)";
 
 export interface AdminEbook {
   id: string;
   title: string;
   author: string | null;
   description: string | null;
+  drive_file_id: string;
   cover_drive_file_id: string | null;
   mime_type: string;
   file_size_bytes: number | null;

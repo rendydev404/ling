@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createServerSupabaseClient, isSupabaseServerConfigured } from "@/lib/supabase/server";
+import { createServerSupabaseClient, createServiceRoleClient, isSupabaseServerConfigured } from "@/lib/supabase/server";
 import { UUID_RE } from "@/lib/ebooks";
 
 export const dynamic = "force-dynamic";
@@ -41,5 +41,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     { onConflict: "user_id,ebook_id" }
   );
   if (error) return NextResponse.json({ error: "Gagal menyimpan progres." }, { status: 500 });
+
+  // Auto-populate ebooks.page_count on first open if it was not filled manually.
+  if (total && total > 0) {
+    const service = createServiceRoleClient();
+    if (service) {
+      await service
+        .from("ebooks")
+        .update({ page_count: total })
+        .eq("id", id)
+        .is("page_count", null);
+    }
+  }
+
   return NextResponse.json({ ok: true });
 }

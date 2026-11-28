@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import Link from "next/link";
 import { BookOpen, BookOpenCheck, Gift, Lock, ShoppingCart } from "lucide-react";
 import { cn, formatIDR } from "@/lib/utils";
@@ -14,6 +17,10 @@ export function MemberEbookCover({
   className?: string;
   priority?: boolean;
 }) {
+  const src = ebook.has_cover ? coverUrl(ebook.id, ebook.updated_at) : null;
+  const [failedSrc, setFailedSrc] = React.useState<string | null>(null);
+  const showImage = Boolean(src && src !== failedSrc);
+
   return (
     <div
       className={cn(
@@ -21,14 +28,15 @@ export function MemberEbookCover({
         className
       )}
     >
-      {ebook.has_cover ? (
+      {showImage && src ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={coverUrl(ebook.id, ebook.updated_at)}
+          src={src}
           alt={`Cover ${ebook.title}`}
           loading={priority ? "eager" : "lazy"}
           decoding="async"
           draggable={false}
+          onError={() => setFailedSrc(src)}
           className={cn("h-full w-full select-none object-cover", locked && "brightness-[0.55] saturate-50")}
         />
       ) : (

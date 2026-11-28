@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient, isSupabaseServerConfigured } from "@/lib/supabase/server";
 import { UUID_RE } from "@/lib/ebooks";
-import { isDriveConfigured } from "@/lib/google-drive";
 import {
   READER_TOKEN_TTL_SECONDS,
   createReaderToken,
@@ -16,9 +15,6 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   const { id } = await params;
   if (!UUID_RE.test(id) || !isSupabaseServerConfigured()) {
     return NextResponse.json({ error: "Ebook tidak ditemukan." }, { status: 404 });
-  }
-  if (!isDriveConfigured()) {
-    return NextResponse.json({ error: "Penyimpanan ebook belum dikonfigurasi." }, { status: 503 });
   }
 
   const supabase = await createServerSupabaseClient();

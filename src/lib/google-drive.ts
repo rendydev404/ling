@@ -1,46 +1,19 @@
-import crypto from "crypto";
-
 /**
- * Google Drive as private ebook storage, server-side only (REST, no SDK).
+ * Google Drive private-proxy helper (Zero-OAuth Link Mode).
  *
- * Files sit in one private folder and are never shared publicly. The browser never
- * sees a Drive id, link or token: uploads are proxied in chunks through
- * /api/admin/ebooks/upload and reading is streamed through /api/reader/[id].
+ * Admin cukup mengunggah PDF ke Google Drive biasa dengan akses "Siapa saja yang memiliki link
+ * (Pelihat / Viewer)" lalu menempelkan link-nya di Admin Area.
  *
- * Two ways to authenticate (pick one):
- *  A) Personal Gmail: OAuth client + refresh token with the `drive.file` scope, so the
- *     app can only touch files it created itself (run `npm run drive:auth` once).
- *  B) Google Workspace: service account added as a member of a Shared Drive folder.
+ * Browser member TIDAK PERNAH melihat link atau ID Google Drive asli:
+ * - Streaming halaman PDF melewati proxy server `/api/reader/[id]` (mendukung HTTP Range).
+ * - Thumbnail cover melewati proxy server `/api/ebooks/[id]/cover`.
  */
 
-const TOKEN_URL = "https://oauth2.googleapis.com/token";
-const API = "https://www.googleapis.com/drive/v3";
-const UPLOAD_API = "https://www.googleapis.com/upload/drive/v3";
-export const DRIVE_UPLOAD_PREFIX = `${UPLOAD_API}/files?`;
+const DOWNLOAD_URL = "https://drive.usercontent.google.com/download";
+const THUMBNAIL_URL = "https://drive.google.com/thumbnail";
+const USER_AGENT = "Mozilla/5.0 (compatible; LingStorefrontReader/1.0)";
 
-type DriveMode = "oauth" | "service_account";
-
-function env(name: string): string {
-  return process.env[name]?.trim() ?? "";
-}
-
-export function getDriveFolderId(): string {
-  return env("GOOGLE_DRIVE_FOLDER_ID");
-}
-
-export function getDriveMode(): DriveMode | null {
-  if (env("GOOGLE_OAUTH_CLIENT_ID") && env("GOOGLE_OAUTH_CLIENT_SECRET") && env("GOOGLE_OAUTH_REFRESH_TOKEN")) {
-    return "oauth";
-  }
-  if (env("GOOGLE_SERVICE_ACCOUNT_EMAIL") && env("GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY")) {
-    return "service_account";
-  }
-  return null;
-}
-
-export function isDriveConfigured(): boolean {
-  return Boolean(getDriveFolderId() && getDriveMode());
-}
+const FILE_ID_RE = /^[A-Za-z0-9_-]{10,120}$/;
 
 export class DriveError extends Error {
   constructor(
@@ -51,244 +24,289 @@ export class DriveError extends Error {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Access token (cached per server instance, refreshed 60s before expiry, de-duplicated)
-// ---------------------------------------------------------------------------
-let cachedToken: { value: string; expiresAt: number } | null = null;
-let inflight: Promise<string> | null = null;
-
-function base64url(input: Buffer | string): string {
-  return Buffer.from(input).toString("base64url");
+export interface ProbedDrivePdf {
+  fileId: string;
+  fileName: string | null;
+  fileSizeBytes: number | null;
+  mimeType: "application/pdf";
 }
 
-/** Signed JWT assertion for the service-account flow (exported for tests). */
-export function buildServiceAccountAssertion(
-  email: string,
-  privateKeyPem: string,
-  nowSeconds = Math.floor(Date.now() / 1000)
-): string {
-  const header = base64url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
-  const claims = base64url(
-    JSON.stringify({
-      iss: email,
-      scope: "https://www.googleapis.com/auth/drive",
-      aud: TOKEN_URL,
-      iat: nowSeconds,
-      exp: nowSeconds + 3600,
-    })
-  );
-  const signer = crypto.createSign("RSA-SHA256");
-  signer.update(`${header}.${claims}`);
-  return `${header}.${claims}.${base64url(signer.sign(privateKeyPem))}`;
-}
+// Cache virus-scan confirmation parameters (for large PDFs >100 MB) for 10 minutes
+// so PDF.js Range requests stay single-hop.
+const confirmParamsCache = new Map<string, { params: Record<string, string>; expiresAt: number }>();
+const CONFIRM_TTL_MS = 10 * 60 * 1000;
 
-async function requestToken(): Promise<string> {
-  const mode = getDriveMode();
-  let body: URLSearchParams;
-  if (mode === "oauth") {
-    body = new URLSearchParams({
-      grant_type: "refresh_token",
-      client_id: env("GOOGLE_OAUTH_CLIENT_ID"),
-      client_secret: env("GOOGLE_OAUTH_CLIENT_SECRET"),
-      refresh_token: env("GOOGLE_OAUTH_REFRESH_TOKEN"),
-    });
-  } else if (mode === "service_account") {
-    // Env files usually carry the PEM with literal "\n".
-    const key = env("GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY").replace(/\\n/g, "\n");
-    body = new URLSearchParams({
-      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-      assertion: buildServiceAccountAssertion(env("GOOGLE_SERVICE_ACCOUNT_EMAIL"), key),
-    });
-  } else {
-    throw new DriveError("Google Drive belum dikonfigurasi.", 503);
+/**
+ * Extracts a clean Google Drive file ID from a share URL or raw ID.
+ */
+export function parseDriveFileId(rawInput: string): string {
+  const input = rawInput.trim();
+  if (!input) {
+    throw new DriveError("Masukkan link file PDF Google Drive terlebih dahulu.", 400);
   }
 
-  const res = await fetch(TOKEN_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body,
-    cache: "no-store",
-  });
-  const json = (await res.json().catch(() => ({}))) as {
-    access_token?: string;
-    expires_in?: number;
-    error?: string;
-    error_description?: string;
-  };
-  if (!res.ok || !json.access_token) {
+  if (/\/folders\/[A-Za-z0-9_-]+/i.test(input)) {
     throw new DriveError(
-      `Gagal login ke Google Drive: ${json.error_description || json.error || res.status}`,
-      502
+      "Link tersebut adalah Folder Google Drive. Klik kanan file PDF-nya langsung lalu pilih Bagikan > Salin link.",
+      400
     );
   }
-  cachedToken = {
-    value: json.access_token,
-    expiresAt: Date.now() + Math.max(60, (json.expires_in ?? 3600) - 60) * 1000,
-  };
-  return json.access_token;
-}
 
-async function getAccessToken(): Promise<string> {
-  if (cachedToken && cachedToken.expiresAt > Date.now()) return cachedToken.value;
-  if (!inflight) {
-    inflight = requestToken().finally(() => {
-      inflight = null;
-    });
+  if (/docs\.google\.com\/(document|spreadsheets|presentation)\//i.test(input)) {
+    throw new DriveError(
+      "Link tersebut adalah dokumen Google Docs/Sheets/Slides. Ekspor sebagai file PDF lalu unggah ke Google Drive.",
+      400
+    );
   }
-  return inflight;
-}
 
-async function driveFetch(url: string, init: RequestInit = {}, retry = true): Promise<Response> {
-  const token = await getAccessToken();
-  const headers = new Headers(init.headers);
-  headers.set("Authorization", `Bearer ${token}`);
-  const res = await fetch(url, { ...init, headers, cache: "no-store" });
-  if (res.status === 401 && retry) {
-    cachedToken = null;
-    return driveFetch(url, init, false);
+  if (FILE_ID_RE.test(input) && input.length >= 15) {
+    return input;
   }
-  return res;
-}
 
-async function driveError(res: Response, fallback: string): Promise<DriveError> {
-  const json = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
-  return new DriveError(`${fallback}: ${json?.error?.message ?? res.statusText}`, res.status);
-}
-
-// ---------------------------------------------------------------------------
-// Files
-// ---------------------------------------------------------------------------
-export interface DriveFileMeta {
-  id: string;
-  name: string;
-  mimeType: string;
-  size: number | null;
-  parents: string[];
-  trashed: boolean;
-}
-
-export async function getDriveFileMeta(fileId: string): Promise<DriveFileMeta> {
-  const res = await driveFetch(
-    `${API}/files/${encodeURIComponent(fileId)}?supportsAllDrives=true&fields=id,name,mimeType,size,parents,trashed`
-  );
-  if (!res.ok) throw await driveError(res, "File Drive tidak ditemukan");
-  const json = (await res.json()) as Omit<DriveFileMeta, "size"> & { size?: string };
-  return {
-    id: json.id,
-    name: json.name,
-    mimeType: json.mimeType,
-    size: json.size ? Number(json.size) : null,
-    parents: json.parents ?? [],
-    trashed: Boolean(json.trashed),
-  };
-}
-
-/** Confirms a freshly uploaded file landed in our private folder with the expected type. */
-export async function assertUploadedFile(
-  fileId: string,
-  allowedMime: (mime: string) => boolean
-): Promise<DriveFileMeta> {
-  const meta = await getDriveFileMeta(fileId);
-  if (meta.trashed || !meta.parents.includes(getDriveFolderId())) {
-    throw new DriveError("File tidak berada di folder ebook.", 400);
+  const pathMatch = input.match(/\/(?:file\/)?d\/([A-Za-z0-9_-]{10,120})(?:[/?#]|$)/i);
+  if (pathMatch?.[1]) {
+    return pathMatch[1];
   }
-  if (!allowedMime(meta.mimeType)) {
-    throw new DriveError(`Tipe file tidak didukung (${meta.mimeType}).`, 400);
-  }
-  return meta;
-}
 
-/** Starts a resumable upload session; the session URL stays with the admin uploader. */
-export async function createResumableUpload(params: {
-  name: string;
-  mimeType: string;
-  size: number;
-}): Promise<string> {
-  const res = await driveFetch(
-    `${UPLOAD_API}/files?uploadType=resumable&supportsAllDrives=true&fields=id,name,mimeType,size`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json; charset=UTF-8",
-        "X-Upload-Content-Type": params.mimeType,
-        "X-Upload-Content-Length": String(params.size),
-      },
-      body: JSON.stringify({
-        name: params.name,
-        mimeType: params.mimeType,
-        parents: [getDriveFolderId()],
-        appProperties: { source: "ling-ebook" },
-      }),
+  try {
+    const parsed = new URL(input);
+    const idParam = parsed.searchParams.get("id")?.trim();
+    if (idParam && FILE_ID_RE.test(idParam)) {
+      return idParam;
     }
+  } catch {
+    // Fall through to generic validation error below.
+  }
+
+  throw new DriveError(
+    "Format link Google Drive tidak dikenali. Gunakan link seperti https://drive.google.com/file/d/.../view",
+    400
   );
-  const location = res.headers.get("location");
-  if (!res.ok || !location) throw await driveError(res, "Gagal memulai upload ke Drive");
-  return location;
 }
 
-export function isDriveUploadSessionUrl(url: string): boolean {
-  return url.startsWith(DRIVE_UPLOAD_PREFIX) && /[?&]upload_id=/.test(url);
+export function buildDriveViewUrl(fileId: string): string {
+  return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/view`;
+}
+
+/** Always ready in Link Proxy mode (no OAuth env vars required). */
+export function isDriveConfigured(): boolean {
+  return true;
+}
+
+export function extractConfirmFormParams(html: string): Record<string, string> | null {
+  if (!/download-form/i.test(html) && !/name=["']uuid["']/i.test(html)) {
+    return null;
+  }
+  const params: Record<string, string> = {};
+  const inputRe = /<input\b[^>]*>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = inputRe.exec(html)) !== null) {
+    const tag = match[0];
+    const name = tag.match(/\bname=["']([^"']+)["']/i)?.[1];
+    const value = tag.match(/\bvalue=["']([^"']*)["']/i)?.[1];
+    if (name && value !== undefined) {
+      params[name] = value;
+    }
+  }
+  return params.uuid || params.confirm ? params : null;
+}
+
+export function parseContentDispositionFilename(header: string | null): string | null {
+  if (!header) return null;
+
+  const utf8Match = header.match(/filename\*\s*=\s*UTF-8''([^;\r\n]+)/i);
+  if (utf8Match?.[1]) {
+    try {
+      return decodeURIComponent(utf8Match[1].trim().replace(/^["']|["']$/g, ""));
+    } catch {
+      // Fallback to regular filename=
+    }
+  }
+
+  const quotedMatch = header.match(/filename\s*=\s*"([^"]+)"/i);
+  if (quotedMatch?.[1]) return quotedMatch[1].trim();
+
+  const plainMatch = header.match(/filename\s*=\s*([^;\r\n]+)/i);
+  if (plainMatch?.[1]) return plainMatch[1].trim().replace(/^["']|["']$/g, "");
+
+  return null;
+}
+
+export function parseTotalBytesFromHeaders(headers: Headers, status: number): number | null {
+  const contentRange = headers.get("content-range");
+  if (contentRange) {
+    const totalMatch = contentRange.match(/\/(\d+)\s*$/);
+    if (totalMatch?.[1]) {
+      const total = Number(totalMatch[1]);
+      if (Number.isFinite(total) && total > 0) return total;
+    }
+  }
+  if (status === 200) {
+    const len = Number(headers.get("content-length") ?? "");
+    if (Number.isFinite(len) && len > 0) return len;
+  }
+  return null;
+}
+
+function buildDownloadUrl(fileId: string, extra?: Record<string, string>): string {
+  const params = new URLSearchParams({
+    id: fileId,
+    export: "download",
+    confirm: "t",
+    ...(extra ?? {}),
+  });
+  return `${DOWNLOAD_URL}?${params.toString()}`;
+}
+
+function isLoginRedirect(url: string, html?: string): boolean {
+  if (/accounts\.google\.com|ServiceLogin/i.test(url)) return true;
+  if (html && /accounts\.google\.com|ServiceLogin/i.test(html)) return true;
+  return false;
+}
+
+function restrictedError(): DriveError {
+  return new DriveError(
+    "File Google Drive masih dikunci (Restricted). Buka Bagikan di Google Drive lalu ubah akses umum menjadi 'Siapa saja yang memiliki link (Pelihat)'.",
+    403
+  );
 }
 
 /**
- * Sends one chunk of a resumable upload.
- * Returns the received byte count while incomplete, or the file id when finished.
+ * Streams file bytes from Google Drive via server-side proxy, forwarding optional HTTP Range.
  */
-export async function uploadChunk(
-  sessionUrl: string,
-  chunk: ArrayBuffer,
-  contentRange: string
-): Promise<{ done: false; received: number } | { done: true; fileId: string }> {
-  if (!isDriveUploadSessionUrl(sessionUrl)) {
-    throw new DriveError("Sesi upload tidak valid.", 400);
+export async function fetchDriveMedia(fileId: string, range?: string | null): Promise<Response> {
+  if (!FILE_ID_RE.test(fileId)) {
+    throw new DriveError("ID file Google Drive tidak valid.", 400);
   }
-  // The session URL itself authorizes the upload; no bearer token needed.
-  const res = await fetch(sessionUrl, {
-    method: "PUT",
-    headers: {
-      "Content-Length": String(chunk.byteLength),
-      "Content-Range": contentRange,
-    },
-    body: chunk,
+
+  const reqHeaders: Record<string, string> = { "User-Agent": USER_AGENT };
+  if (range) reqHeaders.Range = range;
+
+  const cached = confirmParamsCache.get(fileId);
+  const validExtra = cached && cached.expiresAt > Date.now() ? cached.params : undefined;
+
+  let res = await fetch(buildDownloadUrl(fileId, validExtra), {
+    headers: reqHeaders,
+    redirect: "follow",
     cache: "no-store",
   });
-  if (res.status === 308) {
-    const range = res.headers.get("range"); // "bytes=0-1234"
-    const received = range ? Number(range.split("-")[1]) + 1 : 0;
-    return { done: false, received };
-  }
-  if (res.ok) {
-    const json = (await res.json()) as { id?: string };
-    if (!json.id) throw new DriveError("Drive tidak mengembalikan id file.", 502);
-    return { done: true, fileId: json.id };
-  }
-  throw await driveError(res, "Upload chunk gagal");
-}
 
-/** Streams file bytes from Drive, forwarding an optional HTTP Range header. */
-export async function fetchDriveMedia(fileId: string, range?: string | null): Promise<Response> {
-  const headers: Record<string, string> = {};
-  if (range) headers.Range = range;
-  const res = await driveFetch(
-    `${API}/files/${encodeURIComponent(fileId)}?alt=media&supportsAllDrives=true`,
-    { headers }
-  );
-  if (!res.ok && res.status !== 206) throw await driveError(res, "Gagal membaca file dari Drive");
+  if (res.status === 404) {
+    throw new DriveError("File tidak ditemukan di Google Drive. Pastikan link benar dan file belum dihapus.", 404);
+  }
+  if (res.status === 401 || res.status === 403) {
+    throw restrictedError();
+  }
+  if (res.status === 416) {
+    throw new DriveError("Range halaman tidak valid.", 416);
+  }
+  if (isLoginRedirect(res.url)) {
+    throw restrictedError();
+  }
+
+  const contentType = (res.headers.get("content-type") ?? "").toLowerCase();
+  if (contentType.startsWith("text/html")) {
+    const html = (await res.text().catch(() => "")).slice(0, 128_000);
+    if (isLoginRedirect(res.url, html)) {
+      throw restrictedError();
+    }
+
+    const confirmParams = extractConfirmFormParams(html);
+    if (!confirmParams) {
+      throw new DriveError(
+        "Google Drive mengembalikan halaman HTML, bukan file PDF. Pastikan akses file sudah 'Siapa saja yang memiliki link' dan berformat PDF.",
+        403
+      );
+    }
+
+    if (confirmParamsCache.size > 300) confirmParamsCache.clear();
+    confirmParamsCache.set(fileId, {
+      params: confirmParams,
+      expiresAt: Date.now() + CONFIRM_TTL_MS,
+    });
+
+    res = await fetch(buildDownloadUrl(fileId, confirmParams), {
+      headers: reqHeaders,
+      redirect: "follow",
+      cache: "no-store",
+    });
+
+    if (isLoginRedirect(res.url) || (res.headers.get("content-type") ?? "").toLowerCase().startsWith("text/html")) {
+      throw restrictedError();
+    }
+  }
+
+  if (!res.ok && res.status !== 206) {
+    throw new DriveError(`Gagal mengambil file dari Google Drive (HTTP ${res.status}).`, res.status);
+  }
+
   return res;
 }
 
-/** Deletes a file permanently; falls back to trash when delete is not permitted. */
-export async function deleteDriveFile(fileId: string): Promise<void> {
-  const url = `${API}/files/${encodeURIComponent(fileId)}?supportsAllDrives=true`;
-  const res = await driveFetch(url, { method: "DELETE" });
-  if (res.ok || res.status === 404) return;
-  if (res.status === 403) {
-    const trash = await driveFetch(url, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ trashed: true }),
-    });
-    if (trash.ok) return;
+/**
+ * Probes only the first 1 KB of a Google Drive file to confirm access, PDF magic header,
+ * file size, and original filename in ~200 ms without downloading the entire document.
+ */
+export async function probeDrivePdf(rawInput: string): Promise<ProbedDrivePdf> {
+  const fileId = parseDriveFileId(rawInput);
+  const res = await fetchDriveMedia(fileId, "bytes=0-1023");
+
+  const fileSizeBytes = parseTotalBytesFromHeaders(res.headers, res.status);
+  const fileName = parseContentDispositionFilename(res.headers.get("content-disposition"));
+
+  // Read up to the first 1024 bytes even if upstream ignored Range and returned 200.
+  const reader = res.body?.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalRead = 0;
+  if (reader) {
+    try {
+      while (totalRead < 1024) {
+        const { done, value } = await reader.read();
+        if (done || !value) break;
+        chunks.push(value);
+        totalRead += value.byteLength;
+      }
+    } finally {
+      await reader.cancel().catch(() => {});
+    }
   }
-  throw await driveError(res, "Gagal menghapus file Drive");
+
+  const sample = Buffer.concat(chunks.map((c) => Buffer.from(c))).subarray(0, 1024);
+  if (sample.indexOf("%PDF-") === -1) {
+    throw new DriveError(
+      "File pada link tersebut bukan dokumen PDF yang valid. Pastikan file yang dibagikan berformat .pdf.",
+      400
+    );
+  }
+
+  return {
+    fileId,
+    fileName,
+    fileSizeBytes,
+    mimeType: "application/pdf",
+  };
+}
+
+/**
+ * Fetches Google Drive's auto-generated first-page thumbnail on the server so the Drive ID
+ * stays hidden from the browser.
+ */
+export async function fetchDriveThumbnail(fileId: string): Promise<Response> {
+  if (!FILE_ID_RE.test(fileId)) {
+    throw new DriveError("ID file cover tidak valid.", 400);
+  }
+
+  const url = `${THUMBNAIL_URL}?id=${encodeURIComponent(fileId)}&sz=w600`;
+  const res = await fetch(url, {
+    headers: { "User-Agent": USER_AGENT },
+    redirect: "follow",
+    cache: "no-store",
+  });
+
+  const contentType = (res.headers.get("content-type") ?? "").toLowerCase();
+  if (!res.ok || !contentType.startsWith("image/")) {
+    throw new DriveError("Thumbnail cover belum tersedia.", 404);
+  }
+
+  return res;
 }

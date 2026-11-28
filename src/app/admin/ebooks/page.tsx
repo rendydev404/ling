@@ -1,6 +1,5 @@
 import { isSupabaseServerConfigured } from "@/lib/supabase/server";
 import { getAdminSupabaseClient } from "@/lib/supabase/auth";
-import { isDriveConfigured, getDriveMode } from "@/lib/google-drive";
 import { ADMIN_EBOOK_COLS, GRANT_COLS, type AdminEbook, type EbookGrant } from "@/lib/ebooks";
 import { EbooksManager, type ProductOption } from "@/components/admin/ebooks-manager";
 
@@ -34,8 +33,6 @@ export default async function AdminEbooksPage() {
       initialEbooks={ebooks}
       initialGrants={grants}
       products={products}
-      driveConfigured={isDriveConfigured()}
-      driveMode={getDriveMode()}
     />
   );
 }
